@@ -1,0 +1,2 @@
+[env]
+DLSM:ENABLE_COVERAGE=1

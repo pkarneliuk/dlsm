@@ -1,0 +1,4 @@
+[env]
+CFLAGS=-fsanitize=address
+CXXFLAGS=-fsanitize=address
+LDFLAGS=-fsanitize=address

@@ -1,0 +1,4 @@
+[env]
+CFLAGS=-fsanitize=undefined
+CXXFLAGS=-fsanitize=undefined -fno-sanitize-recover=all
+LDFLAGS=-fsanitize=undefined

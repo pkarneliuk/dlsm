@@ -1,0 +1,8 @@
+[settings]
+compiler=gcc
+compiler.version=11
+compiler.libcxx=libstdc++11
+
+[env]
+CC=gcc
+CXX=g++

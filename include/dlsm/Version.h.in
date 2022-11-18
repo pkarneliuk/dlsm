@@ -1,0 +1,11 @@
+#pragma once
+
+namespace dlsm::Version {
+static constexpr char Config[] = "@CMAKE_BUILD_TYPE@";
+static constexpr char String[] = "@DLSM_VERSION@";
+static constexpr unsigned long long Number
+= (@DLSM_VERSION_MAJOR@ULL << 16 * 3)
++ (@DLSM_VERSION_MINOR@ULL << 16 * 2)
++ (@DLSM_VERSION_PATCH@ULL << 16 * 1)
++ (@DLSM_VERSION_TWEAK@ULL << 16 * 0);
+}
