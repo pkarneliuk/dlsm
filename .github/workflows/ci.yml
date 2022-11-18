@@ -1,0 +1,56 @@
+name: CI Actions
+
+on:
+  push:
+  pull_request:
+  release:
+    types: [published]
+
+jobs:
+  ci:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04]
+        build_type: [Debug, Release]
+        compiler: [g++, clang++]
+        opts: [coverage, asan, tsan, usan, common]
+        exclude:
+        - build_type: Release
+          opts: coverage
+        - build_type: Release
+          opts: asan
+        - build_type: Release
+          opts: tsan
+        - build_type: Release
+          opts: usan
+        - build_type: Debug
+          opts: common
+
+    name: ${{ matrix.os }} ${{ matrix.build_type }} ${{ matrix.compiler }} ${{ matrix.opts }}
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install --no-install-recommends cmake gcc clang clang-format clang-tidy lcov llvm doxygen graphviz python3-pip
+          pip install conan==1.59.0
+
+      - name: Conan cache
+        uses: actions/cache@v3
+        with:
+          path: build/.conan
+          key: conan-${{ matrix.os }}-${{ matrix.build_type }}-${{ matrix.compiler }}-${{ matrix.opts }}-${{ hashFiles('conanfile.py', 'scripts/conan/*') }}
+
+      - name: Build
+        run: ./scripts/conan/build.sh ${{ matrix.build_type }} ${{ matrix.compiler }} ${{ matrix.opts }} build
+
+      - name: Upload coverage reports to Codecov
+        if: matrix.opts == 'coverage'
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: build/coverage
+          name: ${{ matrix.build_type }} ${{ matrix.compiler }}

@@ -1,0 +1,5 @@
+[env]
+# Static linking for all binaries including 3rd party libs
+LDFLAGS=-static-libgcc -static-libstdc++
+# Generate documentation
+# DLSM:ENABLE_DOXYGEN=1

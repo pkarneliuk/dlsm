@@ -1,0 +1,33 @@
+namespace dlsm.base;
+
+enum Source:ubyte {
+  MDFH = 0,
+  OEGW = 1,
+  ALGO = 2,
+}
+
+enum Status:ubyte {
+  Active   = 0,
+  Inactive = 1,
+}
+
+struct State(force_align: 8) {
+  timestamp:uint64;
+  source:Source;
+  status:Status;
+  name:[ubyte:6];
+}
+
+table HeartBeat(force_align: 8) {
+  state:State;
+}
+
+
+union Message {
+  HeartBeat
+}
+
+root_type HeartBeat;
+
+file_identifier "DLSM";
+file_extension "dlsm";

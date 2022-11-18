@@ -1,0 +1,5 @@
+[env]
+# Add -fno-sanitize-recover=all to break on first issue
+CFLAGS=-fsanitize=undefined
+CXXFLAGS=-fsanitize=undefined
+LDFLAGS=-fsanitize=undefined

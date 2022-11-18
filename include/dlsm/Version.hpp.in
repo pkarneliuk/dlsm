@@ -1,0 +1,15 @@
+#pragma once
+
+#include <string_view>
+
+namespace dlsm::Version {
+static constexpr std::string_view build_type = "@BUILD_TYPE@";
+static constexpr std::string_view build_time = "@BUILD_TIME@";
+static constexpr std::string_view commit = "@COMMIT_HASH@";
+static constexpr std::string_view string = "@PROJECT_VERSION@";
+static constexpr unsigned long long number
+= (@PROJECT_VERSION_MAJOR@ULL << 16 * 3)
++ (@PROJECT_VERSION_MINOR@ULL << 16 * 2)
++ (@PROJECT_VERSION_PATCH@ULL << 16 * 1)
++ (@PROJECT_VERSION_TWEAK@ULL << 16 * 0);
+}
