@@ -1,4 +1,4 @@
-include(${CONAN_LIB_DIRS_FLATBUFFERS}/cmake/FlatcTargets.cmake)
+find_package(flatbuffers REQUIRED)
 
 set(SCHEMAS
     base.fbs
@@ -25,10 +25,9 @@ add_library     (fbs INTERFACE ${all_generated_h})
 target_include_directories(fbs INTERFACE
 "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>")
 target_precompile_headers (fbs INTERFACE ${all_generated_h})
-target_link_libraries     (fbs INTERFACE CONAN_PKG::flatbuffers)
+target_link_libraries     (fbs INTERFACE flatbuffers::flatbuffers)
 
 #[[
-include(${CONAN_LIB_DIRS_FLATBUFFERS}/cmake/BuildFlatBuffers.cmake)
 flatbuffers_generate_headers(TARGET include INCLUDE_PREFIX fbs SCHEMAS
     base.fbs
     dlsm.fbs
@@ -39,6 +38,6 @@ list(FILTER GENERATED_H INCLUDE REGEX "^.*_generated.h$")
 
 # Dummy target to expose fbs headers outside
 add_library               (fbs STATIC Fbs.cpp)
-target_link_libraries     (fbs PUBLIC include CONAN_PKG::flatbuffers)
+target_link_libraries     (fbs PUBLIC include flatbuffers::flatbuffers)
 target_precompile_headers (fbs INTERFACE ${GENERATED_H})
 ]]

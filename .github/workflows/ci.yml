@@ -36,12 +36,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get -y install --no-install-recommends cmake gcc clang clang-format clang-tidy lcov llvm doxygen graphviz python3-pip
-          pip install conan==1.59.0
+          pip install conan==2.0.10 cmake==3.27.4
 
       - name: Conan cache
         uses: actions/cache@v3
         with:
-          path: build/.conan
+          path: build/.conan2
           key: conan-${{ matrix.os }}-${{ matrix.build_type }}-${{ matrix.compiler }}-${{ matrix.opts }}-${{ hashFiles('conanfile.py', 'scripts/conan/*') }}
 
       - name: Build

@@ -1,5 +1,21 @@
-[env]
+# See:
+# - https://docs.conan.io/2.0/reference/config_files/profiles.html
+# - https://docs.conan.io/2.0/reference/config_files/settings.html
+
+[settings]
+os=Linux
+arch=x86_64
+compiler=gcc
+compiler.version=11
+
+[system_tools]
+cmake/[>=3.27.0]
+
+[buildenv]
 # Static linking for all binaries including 3rd party libs
 LDFLAGS=-static-libgcc -static-libstdc++
 # Generate documentation
 # DLSM:ENABLE_DOXYGEN=1
+[runenv]
+# Enable ctest --output-on-failure
+CTEST_OUTPUT_ON_FAILURE=True

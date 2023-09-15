@@ -1,2 +1,2 @@
-[env]
-DLSM:ENABLE_COVERAGE=1
+[buildenv]
+ENABLE_COVERAGE=1

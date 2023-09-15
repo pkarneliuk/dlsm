@@ -14,7 +14,8 @@ CCompiler=$(echo $Compiler | sed -E "s/clang\+\+/clang/; s/g\+\+/gcc/")
 ConanCompiler=$(echo $Compiler | sed -E "s/^.*clang\+\+.*$/clang/; s/^.*g\+\+.*$/gcc/")
 
 Names=$(printf -- "-%s" ${Type} ${ConanCompiler} "${Opts[@]}")
-Profiles=$(printf -- "--profile ${Root}/scripts/conan/%s " common "${Opts[@]}")
+ProfilesBuild=$(printf -- "--profile:build ${Root}/scripts/conan/%s " common "${Opts[@]}")
+ProfilesHost=$(printf -- "--profile:host ${Root}/scripts/conan/%s " common "${Opts[@]}")
 Dir=${4:-$(echo build${Names} | tr '[:upper:]' '[:lower:]')}
 
 echo $Type CC=$CCompiler CXX=$Compiler Conan:$ConanCompiler $Version Build:$(pwd)/$Dir
@@ -22,23 +23,14 @@ echo $Type CC=$CCompiler CXX=$Compiler Conan:$ConanCompiler $Version Build:$(pwd
 export CC=$CCompiler
 export CXX=$Compiler
 
-export CONAN_USER_HOME=$(pwd)/$Dir # place for .conan with caches, profiles and packages
+export CONAN_HOME=$(pwd)/$Dir/.conan2 # place for .conan2 with caches, profiles and packages
 
-conan install $Root                 \
-    --install-folder $Dir           \
+conan build $Root                   \
+    -of $Dir                        \
     --build=missing                 \
     --update                        \
-    -s os=Linux                     \
-    -s arch=x86_64                  \
     -s build_type=$Type             \
     -s compiler=$ConanCompiler      \
     -s compiler.version=$Version    \
     -s compiler.libcxx=libstdc++11  \
-    $Profiles                       \
-
-conan build $Root                   \
-    --build-folder $Dir             \
-    --configure                     \
-    --build                         \
-    --test                          \
-    --install                       \
+    $ProfilesHost $ProfilesBuild    \

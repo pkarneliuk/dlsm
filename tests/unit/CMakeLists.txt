@@ -1,7 +1,9 @@
+find_package(GTest REQUIRED COMPONENTS gtest gmock)
+
 add_executable            (unit Unit.cpp)
 target_precompile_headers (unit PRIVATE Unit.hpp)
 target_include_directories(unit PRIVATE ../)
-target_link_libraries     (unit PRIVATE dlsm CONAN_PKG::gtest)
+target_link_libraries     (unit PRIVATE dlsm GTest::gtest GTest::gmock)
 target_sources            (unit PRIVATE
     Asan.cpp
     Tsan.cpp

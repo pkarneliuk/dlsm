@@ -1,28 +1,35 @@
-from conans import ConanFile, CMake
+from conan import ConanFile
+from conan.tools.cmake import CMake
 
+# See: https://docs.conan.io/2.0/reference/conanfile/attributes.html
 class DLSM(ConanFile):
     name = "DLSM"
     version="0.0.0.0"
-    generators = "cmake"
+    generators = "CMakeDeps", "CMakeToolchain"
     settings = "os", "arch", "compiler", "build_type"
+
+    tool_requires = "cmake/3.27.4"
+    test_requires = [
+        "gtest/1.14.0@#4372c5aed2b4018ed9f9da3e218d18b3",
+        "benchmark/1.8.3@#2b95dcd66432d8ea28c5ac4db0be2fb2",
+    ]
     requires = [
-        "benchmark/1.7.1@#cd0be7a480a6ace256e2cfe7c9f1c9b8",
-        "flatbuffers/23.1.21@#c7b7265bb316e1718a6a7be077d2d126",
-        "gtest/1.13.0@#b7b21d0d5503615d4ba0223f720b4c0b",
-        "iceoryx/2.0.2@#9cba5c596b3fc7fb5e2174f466a12cad",
+        "flatbuffers/23.5.26@#b153646f6546daab4c7326970b6cd89c",
+        # "iceoryx/2.0.2@#9cba5c596b3fc7fb5e2174f466a12cad",
         "nlohmann_json/3.11.2@#a35423bb6e1eb8f931423557e282c7ed",
-        "spdlog/1.11.0@#faa6eb03bd1009bf2070b0c77e4f56a6",
+        "spdlog/1.12.0@#c5fc262786548cbac34e6c38e16309a9",
+        "zeromq/4.3.4@#6aa4ca3273723ebed33e035ace8a265b",
         "zmqpp/4.2.0@#1fca59746eafbac0b1baf2b9935b11e9",
     ]
 
     default_options = {
-        "spdlog:header_only": False,
+        "spdlog/*:header_only": False,
     }
 
     def build(self):
         cmake = CMake(self)
-        cmake.configure()
+        cmake.configure(variables={"CONAN_PACKAGE_VERSION": self.version})
         cmake.build()
-        cmake.test(output_on_failure=True)
+        cmake.test()
         cmake.install()
         self.run("cpack %s" % (self.build_folder))

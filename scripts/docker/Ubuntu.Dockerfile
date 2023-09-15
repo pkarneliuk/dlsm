@@ -20,4 +20,4 @@ RUN apt-get -y update && apt-get -y install \
     && apt-get clean
 
 RUN pip install                     \
-    conan==1.59.0
+    conan==2.0.10 cmake==3.27.4

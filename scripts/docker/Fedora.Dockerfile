@@ -23,4 +23,4 @@ RUN dnf -y update && dnf -y install \
     && dnf clean all
 
 RUN pip install                     \
-    conan==1.59.0
+    conan==2.0.10 cmake==3.27.4
