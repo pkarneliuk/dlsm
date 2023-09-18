@@ -10,6 +10,7 @@ target_sources            (unit PRIVATE
     Usan.cpp
     Flat.cpp
     TestAllocator.cpp
+    TestClock.cpp
     TestLogger.cpp
     TestSharedMemory.cpp
     TestStr.cpp

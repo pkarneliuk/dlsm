@@ -15,13 +15,16 @@ This project contains scripts and snippets in C++.
  - Integration with [clang-format](https://clang.llvm.org/docs/ClangFormat.html)
  - Integration with [Doxygen](https://github.com/doxygen/doxygen)
 
- ## Useful Scripts
- ```sh
- ./scripts/format.sh   # Apply .clang-format rules on hpp/cpp files
- ./scripts/build.sh    # Perform all types of builds in current environment
- ./scripts/conan/build.sh Debug g++ coverage    # Build Debug by g++ with code coverage
- ./scripts/conan/build.sh Release clang++ tsan  # Build Release by clang++ with ThreadSanitizer
- ./scripts/docker/run.sh Ubuntu                     # Start Ubuntu.Dockerfile container in interactive mode
- ./scripts/docker/run.sh Fedora ./scripts/build.sh  # Perform all types of builds in Docker container
- ./scripts/docker/run.sh Fedora cat /etc/os-release # Perform command in Fedora.Dockerfile container
- ```
+## Useful Scripts
+```sh
+./scripts/format.sh   # Apply .clang-format rules on hpp/cpp files
+./scripts/build.sh    # Perform all types of builds in current environment
+./scripts/conan/build.sh Debug g++ coverage    # Build Debug by g++ with code coverage
+./scripts/conan/build.sh Release clang++ tsan  # Build Release by clang++ with ThreadSanitizer
+./scripts/docker/run.sh Ubuntu                     # Start Ubuntu.Dockerfile container in interactive mode
+./scripts/docker/run.sh Fedora ./scripts/build.sh  # Perform all types of builds in Docker container
+./scripts/docker/run.sh Fedora cat /etc/os-release # Perform command in Fedora.Dockerfile container
+```
+
+## Links and References
+ - [Measuring Latency in Linux](http://btorpey.github.io/blog/2014/02/18/clock-sources-in-linux/)
