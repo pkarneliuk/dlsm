@@ -24,6 +24,7 @@ This project contains scripts and snippets in C++.
 ./scripts/docker/run.sh Ubuntu                     # Start Ubuntu.Dockerfile container in interactive mode
 ./scripts/docker/run.sh Fedora ./scripts/build.sh  # Perform all types of builds in Docker container
 ./scripts/docker/run.sh Fedora cat /etc/os-release # Perform command in Fedora.Dockerfile container
+./scripts/docker/run.sh Ubuntu ./scripts/conan/build.sh Release g++ tsan ./build-ubuntu-tsan
 ```
 
 ## Links and References

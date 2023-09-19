@@ -19,11 +19,13 @@ class DLSM(ConanFile):
         "nlohmann_json/3.11.2@#a35423bb6e1eb8f931423557e282c7ed",
         "spdlog/1.12.0@#c5fc262786548cbac34e6c38e16309a9",
         "zeromq/4.3.4@#6aa4ca3273723ebed33e035ace8a265b",
-        "zmqpp/4.2.0@#1fca59746eafbac0b1baf2b9935b11e9",
     ]
 
     default_options = {
         "spdlog/*:header_only": False,
+        "poller/*:poller": "epoll",         # [None, "kqueue", "epoll", "devpoll", "pollset", "poll", "select"]
+        "zeromq/*:with_draft_api": True,
+        "zeromq/*:with_websocket": False,
     }
 
     def build(self):

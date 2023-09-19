@@ -21,7 +21,7 @@ file(GLOB_RECURSE INTERNAL_HDRS ${PROJECT_SOURCE_DIR}/include/impl/*.hpp)
 add_subdirectory(fbs)
 
 find_package(spdlog REQUIRED)
-find_package(zmqpp  REQUIRED)
+find_package(ZeroMQ REQUIRED)
 
 add_library               (dlsm STATIC  ${INTERNAL_HDRS} ${PUBLIC_HDRS})
 #target_precompile_headers (dlsm PRIVATE ${INTERNAL_HDRS} ${PUBLIC_HDRS})
@@ -37,7 +37,7 @@ target_link_libraries     (dlsm
         fbs
         spdlog::spdlog
     PRIVATE
-        libzmq-static zmqpp::zmqpp
+        libzmq-static
 )
 
 add_subdirectory(src)
@@ -64,8 +64,9 @@ install(EXPORT DLSM-Development
 
 include(CTest)
 if(BUILD_TESTING)
-add_subdirectory(tests/perf)
+set(CMAKE_CTEST_ARGUMENTS -V) # Enable verbose output on test target
 add_subdirectory(tests/unit)
+add_subdirectory(tests/perf)
 endif()
 
 include(CPack)

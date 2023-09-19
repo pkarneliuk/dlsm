@@ -28,14 +28,14 @@ public:
 
         Params(const std::string& options) {
             const auto opts = dlsm::Str::ParseOpts(options);
-            name = opts.get("name");
+            name = opts.required("name");
             create = opts.get("create", "off") != "off";
             readonly = opts.get("readonly", "off") != "off";
             huge2mb = opts.get("huge2mb", "off") != "off";
             huge1gb = opts.get("huge1gb", "off") != "off";
             lock = opts.get("lock", "off") != "off";
             if (create) {
-                const auto size_str = opts.get("size");
+                const auto size_str = opts.required("size");
                 size = std::atol(size_str.c_str());
                 if (size <= 0) {
                     throw std::invalid_argument("'size' has invalid value:" + size_str);

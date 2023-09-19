@@ -53,7 +53,7 @@ Logger::Logger(const std::string& config, const std::string& format, Logger::ISi
 
     const auto opt = [&config, &opts](const std::string& key, const std::string& default_ = {}) -> std::string {
         try {
-            return opts.get(key, default_);
+            return default_.empty() ? opts.required(key) : opts.get(key, default_);
         } catch (const std::exception& e) {
             throw std::invalid_argument("Logger config: '" + config + "' error: " + e.what());
         }
