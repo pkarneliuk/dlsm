@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.27)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+unset(CMAKE_POLICY_DEFAULT_CMP0091)
 
 project(DLSM VERSION ${CONAN_PACKAGE_VERSION} LANGUAGES CXX)
 
@@ -24,7 +25,7 @@ find_package(spdlog REQUIRED)
 find_package(ZeroMQ REQUIRED)
 
 add_library               (dlsm STATIC  ${INTERNAL_HDRS} ${PUBLIC_HDRS})
-#target_precompile_headers (dlsm PRIVATE ${INTERNAL_HDRS} ${PUBLIC_HDRS})
+target_precompile_headers (dlsm PRIVATE ${INTERNAL_HDRS} ${PUBLIC_HDRS})
 target_include_directories(dlsm PUBLIC
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>"
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"

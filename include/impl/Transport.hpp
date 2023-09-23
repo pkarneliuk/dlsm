@@ -11,14 +11,14 @@ concept PayloadPOD = std::is_trivially_destructible_v<T> && std::is_standard_lay
 
 template <typename C, typename T = typename C::value_type>
 concept PayloadContiguous = PayloadPOD<T> && requires(C c) {
-    {std::data(c)};
-    {std::size(c)};
+    { std::data(c) };
+    { std::size(c) };
 };
 
 template <typename C, typename T = typename C::value_type>
 concept PayloadSequence = PayloadPOD<T> && !PayloadContiguous<C> && requires(C c) {
-    {c.begin()};
-    {c.end()};
+    { c.begin() };
+    { c.end() };
 };
 
 struct Transport {

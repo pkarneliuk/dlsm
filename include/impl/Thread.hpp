@@ -23,9 +23,7 @@ static constexpr std::size_t AllCPU = 0xFFFF;
 void affinity(std::size_t cpuid = AllCPU, std::size_t native_handle = 0);
 
 template <typename T>
-concept Yield = requires(T c) {
-    c.pause();
-};
+concept Yield = requires(T c) { c.pause(); };
 
 struct BusyPause {
     static inline void pause() noexcept { dlsm::Thread::pause(); }

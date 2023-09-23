@@ -15,8 +15,9 @@ ConanCompiler=$(echo $Compiler | sed -E "s/^.*clang\+\+.*$/clang/; s/^.*g\+\+.*$
 
 Names=$(printf -- "-%s" ${Type} ${ConanCompiler} "${Opts[@]}")
 ProfilesBuild=$(printf -- "--profile:build ${Root}/scripts/conan/%s " common "${Opts[@]}")
-ProfilesHost=$(printf -- "--profile:host ${Root}/scripts/conan/%s " common "${Opts[@]}")
+ProfilesHost=$(printf  -- "--profile:host  ${Root}/scripts/conan/%s " common "${Opts[@]}")
 Dir=${4:-$(echo build${Names} | tr '[:upper:]' '[:lower:]')}
+Command=${5:-build} # conan install|build
 
 echo $Type CC=$CCompiler CXX=$Compiler Conan:$ConanCompiler $Version Build:$(pwd)/$Dir
 
@@ -25,7 +26,7 @@ export CXX=$Compiler
 
 export CONAN_HOME=$(pwd)/$Dir/.conan2 # place for .conan2 with caches, profiles and packages
 
-conan build $Root                   \
+conan $Command $Root                \
     -of $Dir                        \
     --build=missing                 \
     --update                        \

@@ -114,7 +114,7 @@ public:
                 case ZMQ_SUB:
                     check(0 == zmq_connect(socket_.get(), endpoint.c_str()), "Connect to '" + endpoint + "'");
                     for (const auto& topic : subscribtions()) subscription<true>(topic);
-                    if (auto delay_ms = std::atoi(opts_.get("delay_ms", "100").c_str()); delay_ms != 0) {
+                    if (auto delay_ms = std::atoi(opts_.get("delay_ms", "10").c_str()); delay_ms != 0) {
                         // Give some time to establish subscriptions
                         std::this_thread::sleep_for(std::chrono::milliseconds{delay_ms});
                     }

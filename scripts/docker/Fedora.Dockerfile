@@ -1,4 +1,4 @@
-FROM fedora:37
+FROM fedora:38
 
 ARG UNAME=user
 ARG UID=1000
@@ -11,7 +11,6 @@ RUN dnf -y update && dnf -y install sudo && \
     echo "$UNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 RUN dnf -y update && dnf -y install \
-    cmake                           \
     doxygen                         \
     gcc                             \
     glibc-static libstdc++-static   \
@@ -19,8 +18,7 @@ RUN dnf -y update && dnf -y install \
     clang clang-tools-extra         \
     lcov llvm                       \
     python3-pip                     \
-    perl                            \
     && dnf clean all
 
 RUN pip install                     \
-    conan==2.0.10 cmake==3.27.4
+    conan==2.0.11 cmake==3.27.5

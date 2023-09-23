@@ -32,11 +32,17 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Install dependencies
+      - name: Install toolset
         run: |
-          sudo apt-get update
-          sudo apt-get -y install --no-install-recommends cmake gcc clang clang-format clang-tidy lcov llvm doxygen graphviz python3-pip
-          pip install conan==2.0.10 cmake==3.27.4
+          sudo apt-get -y install software-properties-common && sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+          sudo apt-get -y update
+          sudo apt-get -y install --no-install-recommends g++-13 clang-15 clang clang-format clang-tidy lcov llvm doxygen graphviz python3-pip
+          sudo ln -s $(which g++-13) /usr/local/bin/g++
+          sudo ln -s $(which gcc-13) /usr/local/bin/gcc
+          sudo ln -s $(which gcov-13) /usr/local/bin/gcov
+          sudo ln -s $(which clang++-15) /usr/local/bin/clang++
+          sudo ln -s $(which clang-15  ) /usr/local/bin/clang
+          pip install conan==2.0.11 cmake==3.27.5
 
       - name: Conan cache
         uses: actions/cache@v3
@@ -44,7 +50,10 @@ jobs:
           path: build/.conan2
           key: conan-${{ matrix.os }}-${{ matrix.build_type }}-${{ matrix.compiler }}-${{ matrix.opts }}-${{ hashFiles('conanfile.py', 'scripts/conan/*') }}
 
-      - name: Build
+      - name: Conan install
+        run: ./scripts/conan/build.sh ${{ matrix.build_type }} ${{ matrix.compiler }} ${{ matrix.opts }} build install
+
+      - name: Conan build
         run: ./scripts/conan/build.sh ${{ matrix.build_type }} ${{ matrix.compiler }} ${{ matrix.opts }} build
 
       - name: Upload coverage reports to Codecov

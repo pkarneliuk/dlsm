@@ -43,8 +43,6 @@ static void TransportZMQPubSub(benchmark::State& state, Args&&... args) {
     const auto timestamp = []() { return dlsm::Clock::Monotonic::timestamp(); };
 
     for (auto _ : state) {
-        state.PauseTiming();
-
         std::vector<std::chrono::nanoseconds> deltas;
 
         std::vector<std::jthread> threads{1 + subscribers};
@@ -61,7 +59,6 @@ static void TransportZMQPubSub(benchmark::State& state, Args&&... args) {
                                            std::to_string(buf_size) + ",send_hwm_msgs=" + std::to_string(hwm_msgs));
 
                     enter.arrive_and_wait();
-                    state.ResumeTiming();
 
                     Event e{};
                     while (count < tosend) {
@@ -87,7 +84,6 @@ static void TransportZMQPubSub(benchmark::State& state, Args&&... args) {
                         }
                         count += 1;
                     }
-                    state.PauseTiming();
                     synchronized([&] { state.counters["Pub"] = static_cast<double>(count); });
                     last_sent = count;
                     exit.arrive_and_wait();
@@ -96,6 +92,7 @@ static void TransportZMQPubSub(benchmark::State& state, Args&&... args) {
                     std::size_t timeouts = 0;
 
                     auto sub = p->endpoint("type=sub,endpoint=" + endpoint +
+                                           ",delay_ms=500"
                                            ",recv_timeout_ms=100"
                                            ",recv_buf_size=" +
                                            std::to_string(buf_size) + ",recv_hwm_msgs=" + std::to_string(hwm_msgs));
@@ -146,15 +143,19 @@ static void TransportZMQPubSub(benchmark::State& state, Args&&... args) {
         state.counters["50%"] = duration(percentile(0.50));
         state.counters["99%"] = duration(percentile(0.99));
         state.counters["99.9%"] = duration(percentile(0.999));
-
-        state.ResumeTiming();
     }
 }
 
-const auto hwm_msgs = 1'000'000;
-const auto num_msgs = 1'000'000;
-const auto buf_size = sizeof(Event) * num_msgs;
+#ifdef NDEBUG
 const auto repeats = 5;
+const auto num_msgs = 1'000'000;
+#else
+const auto repeats = 1;
+const auto num_msgs = 1'000;
+#endif  // NDEBUG
+
+const auto hwm_msgs = 1'000'000;
+const auto buf_size = sizeof(Event) * num_msgs;
 
 BENCHMARK_CAPTURE(TransportZMQPubSub, inproc, "inproc://inproc-pub-sub-perf"s, buf_size, hwm_msgs)
     ->Unit(benchmark::kSecond)

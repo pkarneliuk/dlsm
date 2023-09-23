@@ -6,10 +6,10 @@
 os=Linux
 arch=x86_64
 compiler=gcc
-compiler.version=11
+compiler.version=13
 
 [system_tools]
-cmake/[>=3.27.0]
+cmake/3.27
 
 [buildenv]
 # Static linking for all binaries including 3rd party libs

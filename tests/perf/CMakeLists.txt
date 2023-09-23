@@ -11,6 +11,6 @@ target_sources            (perf PRIVATE
 
 add_test(NAME perf COMMAND $<TARGET_FILE:perf>
     #--benchmark_repetitions=1
-    --benchmark_min_time=0.1s
+    --benchmark_min_time=0.01s
     --benchmark_counters_tabular=true
 )

@@ -2,7 +2,9 @@ function(configure_version out_file_var_name in_file_path)
     string(REGEX REPLACE ".in$" "" out_file_path ${in_file_path})
     set(bin_out_file_path ${CMAKE_CURRENT_BINARY_DIR}/${out_file_path})
 
-    configure_file(${in_file_path} ${bin_out_file_path} @ONLY)
+    if(NOT EXISTS ${bin_out_file_path}) # Generate it once
+        configure_file(${in_file_path} ${bin_out_file_path} @ONLY)
+    endif()
     set(${out_file_var_name} ${bin_out_file_path} PARENT_SCOPE)
 endfunction()
 

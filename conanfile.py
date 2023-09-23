@@ -8,7 +8,7 @@ class DLSM(ConanFile):
     generators = "CMakeDeps", "CMakeToolchain"
     settings = "os", "arch", "compiler", "build_type"
 
-    tool_requires = "cmake/3.27.4"
+    tool_requires = "cmake/[>=3.27]"
     test_requires = [
         "gtest/1.14.0@#4372c5aed2b4018ed9f9da3e218d18b3",
         "benchmark/1.8.3@#2b95dcd66432d8ea28c5ac4db0be2fb2",
@@ -23,7 +23,7 @@ class DLSM(ConanFile):
 
     default_options = {
         "spdlog/*:header_only": False,
-        "poller/*:poller": "epoll",         # [None, "kqueue", "epoll", "devpoll", "pollset", "poll", "select"]
+        "zeromq/*:poller": None,  # [None, "kqueue", "epoll", "devpoll", "pollset", "poll", "select"]
         "zeromq/*:with_draft_api": True,
         "zeromq/*:with_websocket": False,
     }
