@@ -36,12 +36,13 @@ jobs:
         run: |
           sudo apt-get -y install software-properties-common && sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
           sudo apt-get -y update
-          sudo apt-get -y install --no-install-recommends g++-13 clang-15 clang clang-format clang-tidy lcov llvm doxygen graphviz python3-pip
+          sudo apt-get -y install --no-install-recommends g++-13 clang-15 clang-format-15 clang-tidy-15 lcov llvm doxygen graphviz python3-pip
           sudo ln -s $(which g++-13) /usr/local/bin/g++
           sudo ln -s $(which gcc-13) /usr/local/bin/gcc
           sudo ln -s $(which gcov-13) /usr/local/bin/gcov
           sudo ln -s $(which clang++-15) /usr/local/bin/clang++
           sudo ln -s $(which clang-15  ) /usr/local/bin/clang
+          sudo ln -s $(which clang-tidy-15) /usr/local/bin/clang-tidy
           pip install conan==2.0.11 cmake==3.27.5
 
       - name: Conan cache
@@ -54,7 +55,7 @@ jobs:
         run: ./scripts/conan/build.sh ${{ matrix.build_type }} ${{ matrix.compiler }} ${{ matrix.opts }} build install
 
       - name: Conan build
-        run: ./scripts/conan/build.sh ${{ matrix.build_type }} ${{ matrix.compiler }} ${{ matrix.opts }} build
+        run: ./scripts/conan/build.sh ${{ matrix.build_type }} ${{ matrix.compiler }} ${{ matrix.opts }} build build
 
       - name: Upload coverage reports to Codecov
         if: matrix.opts == 'coverage'

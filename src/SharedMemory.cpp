@@ -17,46 +17,36 @@ class ShmOpen final : public dlsm::SharedMemory {
     bool owner_ = false;
 
 public:
-    struct Params {
-        std::string name;
-        bool create = false;
-        bool readonly = false;
-        bool huge2mb = false;
-        bool huge1gb = false;
-        bool lock = false;
-        long size = 0;
+    ShmOpen(const std::string_view& options) {
 
-        Params(const std::string& options) {
-            const auto opts = dlsm::Str::ParseOpts(options);
-            name = opts.required("name");
-            create = opts.get("create", "off") != "off";
-            readonly = opts.get("readonly", "off") != "off";
-            huge2mb = opts.get("huge2mb", "off") != "off";
-            huge1gb = opts.get("huge1gb", "off") != "off";
-            lock = opts.get("lock", "off") != "off";
-            if (create) {
-                const auto size_str = opts.required("size");
-                size = std::atol(size_str.c_str());
-                if (size <= 0) {
-                    throw std::invalid_argument("'size' has invalid value:" + size_str);
-                }
+        const auto opts = dlsm::Str::ParseOpts(options);
+        name_ = opts.required("name");
+        bool create = opts.get("create", "off") != "off";
+        bool readonly = opts.get("readonly", "off") != "off";
+        bool huge2mb = opts.get("huge2mb", "off") != "off";
+        bool huge1gb = opts.get("huge1gb", "off") != "off";
+        bool lock = opts.get("lock", "off") != "off";
+        long size = 0;
+        if (create) {
+            const auto size_str = opts.required("size");
+            size = std::atol(size_str.c_str());
+            if (size <= 0) {
+                throw std::invalid_argument("'size' has invalid value:" + size_str);
             }
         }
-    };
 
-    ShmOpen(Params p) : name_{p.name} {
-        if (p.create && p.size <= 0) {
-            throw std::invalid_argument("invalid size value:" + std::to_string(p.size));
+        if (create && size <= 0) {
+            throw std::invalid_argument("invalid size value:" + std::to_string(size));
         }
 
-        if (p.create && p.readonly) {
+        if (create && readonly) {
             throw std::invalid_argument("create and readonly options are not allowed");
         }
 
-        int oflag = (p.readonly ? O_RDONLY : O_RDWR);
-        if (p.create) oflag |= O_CREAT | O_EXCL;
+        int oflag = (readonly ? O_RDONLY : O_RDWR);
+        if (create) oflag |= O_CREAT | O_EXCL;
 
-        mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP;
+        const mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP;
 
         const int fd = ::shm_open(name_.c_str(), oflag, mode);
         if (fd == -1) {
@@ -73,11 +63,11 @@ public:
                 if (fd != -1) ::close(fd);
                 if (!name.empty()) ::shm_unlink(name.c_str());
             }
-        } closer = {fd, p.create ? name_ : ""};
+        } closer = {fd, create ? name_ : ""};
 
-        if (p.create) {
+        if (create) {
             owner_ = true;
-            if (0 != ::ftruncate(fd, p.size)) {
+            if (0 != ::ftruncate(fd, size)) {
                 throw std::system_error(errno, std::generic_category(), "ftruncate()");
             }
         }
@@ -88,16 +78,16 @@ public:
         }
         size_ = static_cast<std::size_t>(statbuf.st_size);
 
-        const int prot = (p.readonly ? PROT_READ : (PROT_READ | PROT_WRITE));
+        const int prot = (readonly ? PROT_READ : (PROT_READ | PROT_WRITE));
         int flags = MAP_SHARED | MAP_POPULATE;
 
-        if (p.huge2mb) {
+        if (huge2mb) {
             flags |= MAP_HUGETLB | (21 << MAP_HUGE_SHIFT) | MAP_ANONYMOUS;
-        } else if (p.huge1gb) {
+        } else if (huge1gb) {
             flags |= MAP_HUGETLB | (30 << MAP_HUGE_SHIFT) | MAP_ANONYMOUS;
         }
 
-        address_ = ::mmap(NULL, size_, prot, flags, fd, 0);
+        address_ = ::mmap(nullptr, size_, prot, flags, fd, 0);
         if (address_ == MAP_FAILED) {
             throw std::system_error(errno, std::generic_category(), "mmap()");
         }
@@ -107,7 +97,7 @@ public:
         ::close(fd);  // legal place to close fd after mmap
         closer.fd = -1;
 
-        if (p.lock) {
+        if (lock) {
             if (0 != ::mlock(address_, size_)) {
                 throw std::system_error(errno, std::generic_category(), "mlock()");
             }
@@ -116,7 +106,7 @@ public:
         closer = Closer{};  // reset
     }
 
-    ~ShmOpen() noexcept {
+    ~ShmOpen() noexcept final {
         if (0 != ::munmap(address_, size_)) {
             // ignore errno
             // throw std::system_error(errno, std::generic_category(), "munmap()");
@@ -136,7 +126,7 @@ public:
 namespace dlsm {
 
 SharedMemory::UPtr SharedMemory::create(const std::string& options) try {
-    return std::make_unique<ShmOpen>(ShmOpen::Params{options});
+    return std::make_unique<ShmOpen>(options);
 } catch (const std::exception& e) {
     throw std::invalid_argument("SharedMemory with opts: '" + options + "' error: " + e.what());
 }

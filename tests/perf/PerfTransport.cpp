@@ -13,13 +13,14 @@
 
 using namespace std::literals;
 
+namespace {
 struct Event {
     std::chrono::nanoseconds timestamp;
     std::uint64_t seqnumber;
 };
 
 template <class... Args>
-static void TransportZMQPubSub(benchmark::State& state, Args&&... args) {
+void TransportZMQPubSub(benchmark::State& state, Args&&... args) {
     auto args_tuple = std::make_tuple(std::move(args)...);
     // clang-format off
     const auto endpoint         = std::get<0>(args_tuple);
@@ -120,7 +121,7 @@ static void TransportZMQPubSub(benchmark::State& state, Args&&... args) {
                     synchronized([&] {
                         deltas.insert(deltas.end(), ts.begin(), ts.end());
 
-                        if (const auto lost = tosend - count; lost)
+                        if (const auto lost = tosend - count)
                             state.counters["Sub" + std::to_string(i) + "Lost"] = static_cast<double>(lost);
                         if (timeouts) state.counters["Sub" + std::to_string(i) + "TO"] = static_cast<double>(timeouts);
                     });
@@ -145,6 +146,7 @@ static void TransportZMQPubSub(benchmark::State& state, Args&&... args) {
         state.counters["99.9%"] = duration(percentile(0.999));
     }
 }
+}  // namespace
 
 #ifdef NDEBUG
 const auto repeats = 5;

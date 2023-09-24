@@ -38,7 +38,7 @@ TEST(SharedMemory, Construction) {
         EXPECT_NE(owner->address(), nullptr);
 
         {
-            auto w = reinterpret_cast<std::size_t*>(owner->address());
+            auto w = static_cast<std::size_t*>(owner->address());
             for (std::size_t i = 0, size = owner->size() / sizeof(w[0]); i < size; ++i) {
                 w[i] = i;
             }
@@ -50,7 +50,7 @@ TEST(SharedMemory, Construction) {
         EXPECT_NE(reader->address(), nullptr);
 
         {
-            auto r = reinterpret_cast<std::size_t*>(reader->address());
+            auto r = static_cast<std::size_t*>(reader->address());
             for (std::size_t i = 0, size = reader->size() / sizeof(r[0]); i < size; ++i) {
                 EXPECT_EQ(r[i], i) << "item at index i must be equal to i";
             }

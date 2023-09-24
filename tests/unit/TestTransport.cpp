@@ -38,7 +38,6 @@ TEST(Transport, ZMQPubSub) {
 
         struct Payload {
             int data = 42;
-            ~Payload() = default;
 
             bool operator==(const Payload& that) const { return this->data == that.data; }
         };

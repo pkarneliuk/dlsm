@@ -45,14 +45,14 @@ using HiRes = StdChrono<std::chrono::high_resolution_clock>;
 template <::clockid_t TYPE>
 struct ClockGetTime {
     static std::chrono::nanoseconds timestamp() noexcept {
-        struct ::timespec tp;
+        struct ::timespec tp{};
         [[maybe_unused]] int r = ::clock_gettime(TYPE, &tp);
         assert(r == 0);
         return TimespecToNano(tp);
     }
 
     static std::chrono::nanoseconds resolution() noexcept {
-        struct ::timespec res;
+        struct ::timespec res{};
         [[maybe_unused]] int r = ::clock_getres(TYPE, &res);
         assert(r == 0);
         return TimespecToNano(res);
@@ -73,8 +73,8 @@ using MonoCoarse = ClockGetTime<CLOCK_MONOTONIC_COARSE>;
 
 struct GetTimeOfDay {
     static std::chrono::nanoseconds timestamp() noexcept {
-        struct ::timeval tv;
-        [[maybe_unused]] int r = gettimeofday(&tv, NULL);
+        struct ::timeval tv{};
+        [[maybe_unused]] int r = gettimeofday(&tv, nullptr);
         assert(r == 0);
         return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::seconds{tv.tv_sec} +
                                                                     std::chrono::microseconds{tv.tv_usec});

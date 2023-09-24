@@ -1,0 +1,10 @@
+# precompiled headers produced by GCC can not be consumed by clang-tidy
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    find_program (CLANG_TIDY clang-tidy clang-tidy-15)
+    if(CLANG_TIDY)
+        set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY})
+        message(STATUS "Found clang-tidy: ${CLANG_TIDY}")
+    else()
+        message(WARNING "clang-tidy tool is not found")
+    endif()
+endif()

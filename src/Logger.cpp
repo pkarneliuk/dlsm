@@ -100,10 +100,10 @@ Logger::Logger(const std::string& config, const std::string& format, Logger::ISi
         throw std::invalid_argument("Unexpected logging flush level value:" + flush);
     }
 
-    bool useUtc = opt("time", "default") != "local";
+    const bool useUtc = opt("time", "default") != "local";
     const auto time = useUtc ? spdlog::pattern_time_type::utc : spdlog::pattern_time_type::local;
-    std::string tz = useUtc ? "Z" : "";
-    std::string loc = (log_->level() <= spdlog::level::debug) ? "%s:%# %!" : "";
+    const std::string tz = useUtc ? "Z" : "";
+    const std::string loc = (log_->level() <= spdlog::level::debug) ? "%s:%# %!" : "";
 
     // Default pattern is(for debug and trace levels):
     // 2023-02-16 18:23:46:32.651Z PID TID level name foo.cpp:123 func message

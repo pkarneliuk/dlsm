@@ -25,7 +25,7 @@ public:
         : context_{zmq_ctx_new(), [](void* ptr) {
                        if (ptr) check(0 == zmq_ctx_term(ptr));
                    }} {
-        check(NULL != context_);
+        check(nullptr != context_);
         // clang-format off
         const auto opts = std::map<std::string_view, int>{
             {"io_threads",   ZMQ_IO_THREADS},
@@ -76,7 +76,7 @@ public:
               socket_{zmq_socket(zmq.context_.get(), type_), [](void* ptr) {
                           if (ptr) check(0 == zmq_close(ptr));
                       }} {
-            check(NULL != socket_);
+            check(nullptr != socket_);
 
             const auto set = [&](auto parser, const std::map<std::string, int>& options) {
                 for (const auto& opt : options) {
@@ -124,16 +124,17 @@ public:
             }
         }
         ~Endpoint() noexcept(false) override {
-            char endpoint[256];
+            std::string endpoint(256, '\0');
             std::size_t size = std::size(endpoint);
-            check(0 == zmq_getsockopt(socket_.get(), ZMQ_LAST_ENDPOINT, endpoint, &size));
+            check(0 == zmq_getsockopt(socket_.get(), ZMQ_LAST_ENDPOINT, std::data(endpoint), &size));
+            endpoint.resize(size);
             switch (type_) {
                 case ZMQ_PUB:
-                    check(0 == zmq_unbind(socket_.get(), endpoint), "unbind(" + std::string{endpoint} + ") ");
+                    check(0 == zmq_unbind(socket_.get(), std::data(endpoint)), "unbind(" + endpoint + ") ");
                     break;
                 case ZMQ_SUB:
                     for (const auto& topic : subscribtions()) subscription<false>(topic);
-                    check(0 == zmq_disconnect(socket_.get(), endpoint), "disconnect(" + std::string{endpoint} + ") ");
+                    check(0 == zmq_disconnect(socket_.get(), std::data(endpoint)), "disconnect(" + endpoint + ") ");
                     break;
                 default:
                     throw std::invalid_argument("Endpoint type is unsupported in dtor");

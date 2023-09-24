@@ -1,0 +1,31 @@
+Checks: '
+clang-diagnostic-*,
+clang-analyzer-*,
+concurrency-*,
+cppcoreguidelines-*,
+misc-*,
+modernize-*,
+performance-*,
+portability-*,
+
+-cppcoreguidelines-avoid-const-or-ref-data-members
+-cppcoreguidelines-avoid-magic-numbers
+-cppcoreguidelines-pro-bounds-pointer-arithmetic
+-cppcoreguidelines-special-member-functions
+-hicpp-braces-around-statements
+-misc-const-correctness
+-misc-non-private-member-variables-in-classes
+-modernize-use-trailing-return-type
+-modernize-use-nodiscard
+'
+WarningsAsErrors: '
+clang-diagnostic-*,
+clang-analyzer-*,
+concurrency-*,
+cppcoreguidelines-*,
+misc-*,
+modernize-*,
+performance-*,
+portability-*,'
+HeaderFilterRegex: '.*'
+FormatStyle: none

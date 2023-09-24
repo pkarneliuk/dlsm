@@ -1,26 +1,28 @@
 #include "impl/Thread.hpp"
 
 #include <pthread.h>
-#include <time.h>
 
+#include <cstring>
+#include <ctime>
 #include <system_error>
 
 namespace dlsm::Thread {
 
 void name(const std::string& name, std::size_t native_handle) {
     auto thread = (native_handle == 0) ? pthread_self() : static_cast<pthread_t>(native_handle);
-    if (int err = pthread_setname_np(thread, name.c_str())) {
+    if (const int err = pthread_setname_np(thread, name.c_str())) {
         throw std::system_error(err, std::generic_category(), "pthread_setname_np()");
     }
 }
 
 std::string name(std::size_t native_handle) {
     auto thread = (native_handle == 0) ? pthread_self() : static_cast<pthread_t>(native_handle);
-    char name[16];
-    if (int err = pthread_getname_np(thread, name, sizeof(name))) {
+    std::string name(16, '\0');
+    if (const int err = pthread_getname_np(thread, std::data(name), std::size(name))) {
         throw std::system_error(err, std::generic_category(), "pthread_getname_np()");
     }
-    return std::string(name);
+    name.resize(std::strlen(name.c_str()));
+    return name;
 }
 
 void affinity(std::size_t cpuid, std::size_t native_handle) {
@@ -35,14 +37,14 @@ void affinity(std::size_t cpuid, std::size_t native_handle) {
         CPU_SET(cpuid, &cpuset);
     }
 
-    if (int err = ::pthread_setaffinity_np(thread, sizeof(cpuset), &cpuset)) {
+    if (const int err = ::pthread_setaffinity_np(thread, sizeof(cpuset), &cpuset)) {
         throw std::system_error(err, std::system_category(), "pthread_setaffinity_np()");
     }
 }
 
 void NanoSleep::pause() noexcept {
     const timespec timeout = {0, 1};
-    ::nanosleep(&timeout, NULL);
+    ::nanosleep(&timeout, nullptr);
 }
 
 }  // namespace dlsm::Thread

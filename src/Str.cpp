@@ -26,7 +26,7 @@ const std::string& ParseOpts::get(const std::string& key, const std::string& _de
 
 std::vector<std::string> split(const std::string_view& s, const std::string_view& delimiter) {
     if (delimiter.empty()) return std::vector<std::string>{std::string{s}};
-    size_t pos_start = 0, pos_end, delim_len = delimiter.length();
+    std::size_t pos_start = 0, pos_end = 0, delim_len = delimiter.length();
     std::string token;
     std::vector<std::string> res;
 

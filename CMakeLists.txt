@@ -3,13 +3,15 @@ cmake_minimum_required(VERSION 3.27)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-unset(CMAKE_POLICY_DEFAULT_CMP0091)
+
+cmake_policy(SET CMP0091 ${CMAKE_POLICY_DEFAULT_CMP0091})
 
 project(DLSM VERSION ${CONAN_PACKAGE_VERSION} LANGUAGES CXX)
 
 include(GNUInstallDirs)
 include(cmake/Coverage.cmake)
 include(cmake/Doxygen.cmake)
+include(cmake/Linters.cmake)
 include(cmake/Options.cmake)
 include(cmake/Version.cmake)
 include(cmake/Package.cmake)

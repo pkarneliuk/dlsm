@@ -42,7 +42,7 @@ struct MAdviseAllocator : public THPAllocator<T> {
         return static_cast<T*>(p);
     }
 
-    void deallocate(T* p, std::size_t n) noexcept { std::free(p); }
+    void deallocate(T* p, std::size_t n) noexcept { ::free(p); } // NOLINT
 };
 
 template <typename T>
