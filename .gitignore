@@ -1,6 +1,9 @@
 [Bb]uild*/*
 
 .vscode/*
-.conan/*
+.conan2/*
 
 CMakeUserPresets.json
+
+# Measurements data
+*.ns

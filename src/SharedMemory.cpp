@@ -18,7 +18,6 @@ class ShmOpen final : public dlsm::SharedMemory {
 
 public:
     ShmOpen(const std::string_view& options) {
-
         const auto opts = dlsm::Str::ParseOpts(options);
         name_ = opts.required("name");
         bool create = opts.get("create", "off") != "off";

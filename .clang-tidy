@@ -11,6 +11,7 @@ portability-*,
 -cppcoreguidelines-avoid-const-or-ref-data-members
 -cppcoreguidelines-avoid-magic-numbers
 -cppcoreguidelines-pro-bounds-pointer-arithmetic
+-cppcoreguidelines-pro-type-reinterpret-cast
 -cppcoreguidelines-special-member-functions
 -hicpp-braces-around-statements
 -misc-const-correctness

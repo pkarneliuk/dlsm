@@ -12,7 +12,7 @@ This project contains scripts and snippets in C++.
  - Build 3rd-party libraries by [Conan](https://docs.conan.io/en/latest/introduction.html)
  - Build C++ code coverage HTML report by [LCOV](https://github.com/linux-test-project/lcov) with lines/functions/branches metrics
  - Build with Thread/Address/UndefinedBehavior [Sanitizer](https://github.com/google/sanitizers)
- - Integration with [clang-format](https://clang.llvm.org/docs/ClangFormat.html)
+ - Integration with [clang-format](https://clang.llvm.org/docs/ClangFormat.html) and [clang-tidy](https://clang.llvm.org/extra/clang-tidy/)
  - Integration with [Doxygen](https://github.com/doxygen/doxygen)
 
 ## Useful Scripts
