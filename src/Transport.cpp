@@ -26,8 +26,8 @@ public:
                        if (ptr) check(0 == zmq_ctx_term(ptr));
                    }} {
         check(nullptr != context_);
-        // clang-format off
-        const auto opts = std::map<std::string_view, int>{
+        static const auto opts = std::map<std::string_view, int>{
+            // clang-format off
             {"io_threads",   ZMQ_IO_THREADS},
             {"max_sockets",  ZMQ_MAX_SOCKETS},
             {"sched_policy", ZMQ_THREAD_SCHED_POLICY},
@@ -35,8 +35,8 @@ public:
             {"cpu_add",      ZMQ_THREAD_AFFINITY_CPU_ADD},
             {"cpu_rem",      ZMQ_THREAD_AFFINITY_CPU_REMOVE},
             {"ipv6",         ZMQ_IPV6},
+            // clang-format on
         };
-        // clang-format on
 
         // Parse options and try to set their values to context
         for (const auto& opt : dlsm::Str::ParseOpts(options)) try {
@@ -108,9 +108,11 @@ public:
             // clang-format on
             const auto& endpoint = opts_.required("endpoint");
             switch (type_) {
+                case ZMQ_XPUB:
                 case ZMQ_PUB:
                     check(0 == zmq_bind(socket_.get(), endpoint.c_str()), "Bind to '" + endpoint + "'");
                     break;
+                case ZMQ_XSUB:
                 case ZMQ_SUB:
                     check(0 == zmq_connect(socket_.get(), endpoint.c_str()), "Connect to '" + endpoint + "'");
                     for (const auto& topic : subscribtions()) subscription<true>(topic);
@@ -129,9 +131,11 @@ public:
             check(0 == zmq_getsockopt(socket_.get(), ZMQ_LAST_ENDPOINT, std::data(endpoint), &size));
             endpoint.resize(size);
             switch (type_) {
+                case ZMQ_XPUB:
                 case ZMQ_PUB:
                     check(0 == zmq_unbind(socket_.get(), std::data(endpoint)), "unbind(" + endpoint + ") ");
                     break;
+                case ZMQ_XSUB:
                 case ZMQ_SUB:
                     for (const auto& topic : subscribtions()) subscription<false>(topic);
                     check(0 == zmq_disconnect(socket_.get(), std::data(endpoint)), "disconnect(" + endpoint + ") ");
@@ -168,9 +172,15 @@ public:
 
         template <bool Enable>
         void subscription(const std::string& topic) {
-            const auto [opt, msg] = Enable ? std::pair{ZMQ_SUBSCRIBE, "Subscribe to '" + topic + "' "}
-                                           : std::pair{ZMQ_UNSUBSCRIBE, "Unsubscribe from '" + topic + "' "};
-            check(0 == zmq_setsockopt(socket_.get(), opt, std::data(topic), std::size(topic)), msg);
+            if (type_ == ZMQ_SUB) {
+                const auto [opt, msg] = Enable ? std::pair{ZMQ_SUBSCRIBE, "Subscribe to '" + topic + "' "}
+                                               : std::pair{ZMQ_UNSUBSCRIBE, "Unsubscribe from '" + topic + "' "};
+                check(0 == zmq_setsockopt(socket_.get(), opt, std::data(topic), std::size(topic)), msg);
+            } else if (type_ == ZMQ_XSUB) {
+                std::string msg(1, Enable ? '\x1' : '\x0');
+                msg.insert(1, topic);
+                send(msg.data(), msg.size());
+            }
         }
 
         std::vector<std::string> subscribtions() const { return dlsm::Str::split(opts_.get("subscribe", ""), "+"); }
