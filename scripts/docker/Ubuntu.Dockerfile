@@ -30,4 +30,4 @@ RUN    ln -s $(which g++-13) /usr/local/bin/g++         \
     && ln -s $(which clang-tidy-15) /usr/local/bin/clang-tidy
 
 RUN pip install                     \
-    conan==2.0.11 cmake==3.27.5
+    conan==2.0.13 cmake==3.27.5

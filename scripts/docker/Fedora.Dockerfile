@@ -1,4 +1,4 @@
-FROM fedora:38
+FROM fedora:39
 
 ARG UNAME=user
 ARG UID=1000
@@ -14,6 +14,9 @@ RUN dnf -y update && dnf -y install \
     doxygen                         \
     gcc                             \
     glibc-static libstdc++-static   \
+    libasan-static                  \
+    libtsan-static                  \
+    libubsan-static                 \
     libatomic                       \
     clang clang-tools-extra         \
     lcov llvm                       \
@@ -21,4 +24,4 @@ RUN dnf -y update && dnf -y install \
     && dnf clean all
 
 RUN pip install                     \
-    conan==2.0.11 cmake==3.27.5
+    conan==2.0.13 cmake==3.27.5

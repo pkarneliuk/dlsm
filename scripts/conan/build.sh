@@ -16,7 +16,8 @@ ConanCompiler=$(echo $Compiler | sed -E "s/^.*clang\+\+.*$/clang/; s/^.*g\+\+.*$
 Names=$(printf -- "-%s" ${Type} ${ConanCompiler} "${Opts[@]}")
 ProfilesBuild=$(printf -- "--profile:build ${Root}/scripts/conan/%s " common "${Opts[@]}")
 ProfilesHost=$(printf  -- "--profile:host  ${Root}/scripts/conan/%s " common "${Opts[@]}")
-Dir=${4:-$(echo build${Names} | tr '[:upper:]' '[:lower:]')}
+OSID=$(grep -oP '(?<=^ID=).+' /etc/os-release)
+Dir=${4:-$(echo build-${OSID}${Names} | tr '[:upper:]' '[:lower:]')}
 Command=${5:-build} # conan install|build
 
 echo $Type CC=$CCompiler CXX=$Compiler Conan:$ConanCompiler $Version Build:$(pwd)/$Dir

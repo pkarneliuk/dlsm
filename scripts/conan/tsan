@@ -1,6 +1,4 @@
 [buildenv]
-CFLAGS=-fsanitize=thread
-CXXFLAGS=-fsanitize=thread
-LDFLAGS=-fsanitize=thread
-[runenv]
+CFLAGS  +=-fsanitize=thread
+CXXFLAGS+=-fsanitize=thread
 TSAN_OPTIONS=allocator_may_return_null=1

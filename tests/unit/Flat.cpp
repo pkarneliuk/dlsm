@@ -6,20 +6,14 @@
 
 TEST(Flat, Simplest) {
     flatbuffers::FlatBufferBuilder builder(1024);
-    std::cout << builder.GetSize() << std::endl;
+    EXPECT_EQ(builder.GetSize(), 0);
     using namespace dlsm::base;
     auto state = builder.CreateStruct(State{1234ULL, Source::MDFH, Status::Inactive});
 
-    std::cout << builder.GetSize() << std::endl;
+    EXPECT_EQ(builder.GetSize(), 16);
 
     builder.Finish(state);
 
-    auto buff = builder.GetBufferPointer();
-    auto size = builder.GetSize();
-
-    std::cout << size << " " << (void*)buff << std::endl;
-
-    GetHeartBeat(buff);
-
-    // base::GetState(bu);
+    EXPECT_EQ(builder.GetSize(), 24);
+    EXPECT_NE(builder.GetBufferPointer(), nullptr);
 }

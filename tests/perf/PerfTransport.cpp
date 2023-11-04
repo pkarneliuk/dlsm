@@ -5,6 +5,7 @@
 #include <iostream>
 #include <mutex>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include "impl/Clock.hpp"
@@ -22,7 +23,7 @@ struct Event {
 
 template <class... Args>
 void TransportZMQPubSub(benchmark::State& state, Args&&... args) {
-    auto args_tuple = std::make_tuple(std::move(args)...);
+    auto args_tuple = std::make_tuple(std::forward<Args>(args)...);
     // clang-format off
     const auto endpoint         = std::get<0>(args_tuple);
     const auto buf_size         = std::get<1>(args_tuple);
@@ -70,7 +71,7 @@ void TransportZMQPubSub(benchmark::State& state, Args&&... args) {
                         e.seqnumber += 1;
 
                         if (!pub->send(e)) {
-                            std::cerr << "Failed to Send " << e.seqnumber << std::endl;
+                            std::cerr << "Failed to Send " << e.seqnumber << '\n';
                             send_failed = 1;
                             break;
                         }
@@ -109,18 +110,18 @@ void TransportZMQPubSub(benchmark::State& state, Args&&... args) {
                             count += 1;
                             if (expected != e.seqnumber) {
                                 //    std::cerr << "Gap in Recv #" << expected << " != #" << e.seqnumber
-                                //              << " missing:" << (e.seqnumber - expected) << std::endl;
+                                //              << " missing:" << (e.seqnumber - expected) << '\n';
                             }
                         } else {
                             ++timeouts;
                             if (last_sent == tosend) {
                                 std::cerr << "Sending completed. Break recv after Timeout on #" << e.seqnumber
-                                          << " lost:" << (tosend - e.seqnumber) << std::endl;
+                                          << " lost:" << (tosend - e.seqnumber) << '\n';
                                 break;
                             }
                             if (send_failed) {
                                 std::cerr << "Break after Send failure on #" << e.seqnumber
-                                          << " lost:" << (tosend - e.seqnumber) << std::endl;
+                                          << " lost:" << (tosend - e.seqnumber) << '\n';
                                 break;
                             }
                         }

@@ -1,6 +1,4 @@
 [buildenv]
-CFLAGS=-fsanitize=address
-CXXFLAGS=-fsanitize=address
-LDFLAGS=-fsanitize=address
-[runenv]
-ASAN_OPTIONS=allocator_may_return_null=1:detect_stack_use_after_return=1:detect_stack_use_after_scope=1:check_initialization_order=true:strict_init_order=true
+CFLAGS  +=-fsanitize=address
+CXXFLAGS+=-fsanitize=address
+ASAN_OPTIONS=detect_leaks=1:allocator_may_return_null=1:detect_stack_use_after_return=1:detect_stack_use_after_scope=1:check_initialization_order=true:strict_init_order=true

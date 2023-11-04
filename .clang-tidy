@@ -15,6 +15,7 @@ portability-*,
 -cppcoreguidelines-special-member-functions
 -hicpp-braces-around-statements
 -misc-const-correctness
+-misc-include-cleaner
 -misc-non-private-member-variables-in-classes
 -modernize-use-trailing-return-type
 -modernize-use-nodiscard
