@@ -21,6 +21,10 @@ TEST(Logger, Construction) {
                 ThrowsMessage<std::invalid_argument>(
                     "Logger config: 'debug:file:' error: Missing required key=value for key:path"));
 
+    EXPECT_THAT([] { dlsm::Logger("debug:file:truncate=on"); },
+                ThrowsMessage<std::invalid_argument>(
+                    "Logger config: 'debug:file:truncate=on' error: Missing required key=value for key:path"));
+
     EXPECT_THAT([] { dlsm::Logger("debug:rotating:"); },
                 ThrowsMessage<std::invalid_argument>(EndsWith("Missing required key=value for key:max_size")));
 
@@ -32,6 +36,9 @@ TEST(Logger, Construction) {
 
     EXPECT_THAT([] { dlsm::Logger("debug:sink:"); },
                 ThrowsMessage<std::invalid_argument>("Pointer to requested logger sink is nullptr"));
+
+    EXPECT_NO_THROW(dlsm::Logger("debug:stdout:"););
+    EXPECT_NO_THROW(dlsm::Logger("debug:stderr:"););
 
     EXPECT_NO_THROW(Tests::Unit::LoggingSink records; dlsm::Logger log("trace:sink:async=on", {}, &records);
                     EXPECT_EQ(log->name(), "default");
@@ -80,7 +87,11 @@ TEST(Logger, Get) {
     EXPECT_THAT([] { dlsm::Logger::get("TestNull"); },
                 ThrowsMessage<std::runtime_error>("Unregistered logger name:TestNull"));
 
-    { dlsm::Logger log("trace:null:name=TestNull,register=on", {}); }
+    EXPECT_NO_THROW({ dlsm::Logger log("trace:null:name=TestNull,register=on", {}); });
+    EXPECT_NO_THROW({
+        dlsm::Logger log("trace:null:name=Default,register=default", {});
+        dlsm::Logger def{dlsm::Logger::get()};
+    });
 
     EXPECT_NO_THROW({
         auto log = dlsm::Logger::get("TestNull");
