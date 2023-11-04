@@ -1,0 +1,4 @@
+# ThreadSanitizer suppressions, see:
+# - https://github.com/google/sanitizers/wiki/ThreadSanitizerSuppressions
+
+race:Tsan_DataRace_Test

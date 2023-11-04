@@ -7,5 +7,5 @@ TEST(Asan, DISABLED_DoubleFree) {
     delete p;
 }
 
-TEST(Asan, DISABLED_LeakedAllocation) { new char; }
+TEST(Asan, LeakedAllocation) { new char; }
 // NOLINTEND

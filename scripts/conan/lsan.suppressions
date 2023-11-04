@@ -1,0 +1,4 @@
+# LeakSanitizer suppressions, see:
+# - https://clang.llvm.org/docs/AddressSanitizer.html#suppressing-memory-leaks
+
+leak:Asan_LeakedAllocation

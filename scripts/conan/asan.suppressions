@@ -1,0 +1,6 @@
+# AddressSanitizer suppressions, see:
+# - https://clang.llvm.org/docs/AddressSanitizer.html#suppressing-reports-in-external-libraries
+
+interceptor_via_fun:-[ClassName Asan_DoubleFree_Test::TestBody:]
+interceptor_via_fun:-[ClassName Asan_DoubleFree_Test:]
+interceptor_via_fun:*MAdviseAllocator*

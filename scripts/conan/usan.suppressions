@@ -1,0 +1,5 @@
+# UndefinedBehaviorSanitizer suppressions, see:
+# - https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html#runtime-suppressions
+
+# ZeroMQ
+alignment:yqueue.hpp

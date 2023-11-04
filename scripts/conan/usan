@@ -1,4 +1,4 @@
 [buildenv]
 CFLAGS  +=-fsanitize=undefined
 CXXFLAGS+=-fsanitize=undefined
-UBSAN_OPTIONS=symbolize=1:halt_on_error=0:print_stacktrace=1
+UBSAN_OPTIONS=suppressions={{os.path.join(profile_dir, "usan.suppressions")}}:symbolize=1:halt_on_error=0:print_stacktrace=1
