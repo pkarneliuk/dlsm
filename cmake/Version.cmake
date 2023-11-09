@@ -1,7 +1,6 @@
 function(configure_version out_file_var_name in_file_path)
     string(REGEX REPLACE ".in$" "" out_file_path ${in_file_path})
-    set(bin_out_file_path ${CMAKE_CURRENT_BINARY_DIR}/${out_file_path})
-
+    set(bin_out_file_path ${CMAKE_BINARY_DIR}/gen/${out_file_path})
     if(NOT EXISTS ${bin_out_file_path}) # Generate it once
         configure_file(${in_file_path} ${bin_out_file_path} @ONLY)
     endif()

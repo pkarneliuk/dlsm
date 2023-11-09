@@ -18,7 +18,7 @@ RUN apt-get -y update && apt-get -y install --no-install-recommends \
     doxygen graphviz                        \
     g++-13                                  \
     clang-15 clang-format-15 clang-tidy-15  \
-    lcov llvm                               \
+    lcov llvm-15                            \
     python3-pip                             \
     && apt-get clean
 
@@ -27,6 +27,7 @@ RUN    ln -s $(which g++-13) /usr/local/bin/g++         \
     && ln -s $(which gcov-13) /usr/local/bin/gcov       \
     && ln -s $(which clang++-15) /usr/local/bin/clang++ \
     && ln -s $(which clang-15  ) /usr/local/bin/clang   \
+    && ln -s $(which llvm-cov-15) /usr/local/bin/llvm-cov \
     && ln -s $(which clang-tidy-15) /usr/local/bin/clang-tidy
 
 RUN pip install                     \

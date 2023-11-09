@@ -25,6 +25,7 @@ This project contains scripts and snippets in C++.
 ./scripts/docker/run.sh Fedora ./scripts/build.sh  # Perform all types of builds in Docker container
 ./scripts/docker/run.sh Fedora cat /etc/os-release # Perform command in Fedora.Dockerfile container
 ./scripts/docker/run.sh Ubuntu ./scripts/conan/build.sh Release g++ tsan ./build-ubuntu-tsan
+./scripts/docker/run.sh Ubuntu ./scripts/conan/build.sh RelWithDebInfo g++ common ./build
 ```
 
 ## Links and References

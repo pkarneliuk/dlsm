@@ -19,5 +19,5 @@ make -C ./build perf && ./build/tests/perf/perf --benchmark_filter=Transport --b
 This script reads binary files with `int64` samples(nanoseconds timestamps), and plots them as `master` and `signals` delays relative to `master`.
 ```sh
 # Display Pub1.ns as master and delays of Sub1/Sub2/Sub3/Sub4.ns signals relative to Pub1
-./tests/perf/delays.py ./build/tests/perf/TransportZMQPubSub-mem-*
+./tests/perf/delays.py ./build/tests/perf/TransportPubSub-mem-*
 ```

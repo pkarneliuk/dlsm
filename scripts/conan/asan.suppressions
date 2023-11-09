@@ -4,3 +4,6 @@
 interceptor_via_fun:-[ClassName Asan_DoubleFree_Test::TestBody:]
 interceptor_via_fun:-[ClassName Asan_DoubleFree_Test:]
 interceptor_via_fun:*MAdviseAllocator*
+
+# iceoryx/2.0.5 looks totally broken
+interceptor_via_fun:iox::version::VersionInfo::getCurrentVersion

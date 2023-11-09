@@ -2,7 +2,7 @@
 
 Root=$(realpath $(dirname $(realpath $0))/..)
 
-$Root/scripts/conan/build.sh Debug g++ "coverage asan"
+$Root/scripts/conan/build.sh Debug clang++ "coverage asan"
 $Root/scripts/conan/build.sh Debug clang++ usan
 $Root/scripts/conan/build.sh Debug clang++ tsan
 

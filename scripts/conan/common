@@ -13,14 +13,17 @@ compiler.version=13
 cmake/3.27
 
 [buildenv]
-# Static linking for all binaries including 3rd party libs
-LDFLAGS+=-static-libgcc -static-libstdc++
 # Generate documentation
 # DLSM:ENABLE_DOXYGEN=1
 # Enable ctest --output-on-failure
 CTEST_OUTPUT_ON_FAILURE=True
+# Print only failed GTest output
+GTEST_BRIEF=1
 
 [conf]
+# Static linking for all binaries including 3rd party libs
+tools.build:exelinkflags   +=-static-libgcc -static-libstdc++
+tools.build:sharedlinkflags+=-static-libgcc -static-libstdc++
 # Enable verbosity
 # tools.build:verbosity=verbose
 # tools.compilation:verbosity=verbose

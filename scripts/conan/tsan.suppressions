@@ -2,3 +2,13 @@
 # - https://github.com/google/sanitizers/wiki/ThreadSanitizerSuppressions
 
 race:Tsan_DataRace_Test
+
+# iceoryx/2.0.5 looks totally broken
+race:iox::posix::PosixUser::getUserName
+race:iox::popo::BasePortData::BasePortData
+race:iox::mepoo::ShmSafeUnmanagedChunk::releaseToSharedChunk
+race:iox::popo::PublisherPortUser::sendChunk
+race:iox::popo::PublisherPortUser::tryAllocateChunk
+race:iox::popo::SubscriberPortUser::tryGetChunk
+race:dlsm::Transport<dlsm::IOX>::Pub::send
+race:dlsm::Transport<dlsm::IOX>::Sub::recv

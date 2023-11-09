@@ -5,5 +5,8 @@
 
 int main(int /*argc*/, char** argv) {
     std::cout << "App:" << argv[0] << " Version:" << dlsm::Version::string << '\n';
-    return 0;
+
+    dlsm::Public p;
+    p.set(1);
+    return p.get();
 }

@@ -22,20 +22,20 @@ struct Event {
 };
 
 template <class... Args>
-void TransportZMQPubSub(benchmark::State& state, Args&&... args) {
+void TransportPubSub(benchmark::State& state, Args&&... args) {
     auto args_tuple = std::make_tuple(std::forward<Args>(args)...);
     // clang-format off
-    const auto endpoint         = std::get<0>(args_tuple);
-    const auto buf_size         = std::get<1>(args_tuple);
-    const auto hwm_msgs         = std::get<2>(args_tuple);
+    const auto type             = std::get<0>(args_tuple);
+    const auto ropts            = std::get<1>(args_tuple);
+    const auto popts            = std::get<2>(args_tuple);
+    const auto sopts            = std::get<3>(args_tuple);
     const auto subscribers      = static_cast<std::uint64_t>(state.range(0));
     const auto tosend           = static_cast<std::uint64_t>(state.range(1));
     const auto send_delay_after = static_cast<std::uint64_t>(state.range(2));
     const auto send_delay_us    = static_cast<std::uint64_t>(state.range(3));
     // clang-format on
 
-    // inproc:// does not need I/O threads, priority=99,sched_policy=2,
-    auto p = dlsm::Transport::create("io_threads=" + (endpoint.starts_with("inproc://") ? "0"s : "4"s));
+    auto runtime = dlsm::Transport<std::remove_pointer_t<decltype(type)>>(ropts);
     std::mutex state_mutex;
     const auto synchronized = [&](auto action) {
         std::lock_guard<std::mutex> guard(state_mutex);
@@ -57,11 +57,7 @@ void TransportZMQPubSub(benchmark::State& state, Args&&... args) {
                 auto& ts = timestamps[i];
                 std::uint64_t count = 0;
                 if (i == 0) {
-                    auto pub = p->endpoint("type=pub,endpoint=" + endpoint +
-                                           ",delay_ms=100"
-                                           ",send_timeout_ms=10"
-                                           ",send_buf_size=" +
-                                           std::to_string(buf_size) + ",send_hwm_msgs=" + std::to_string(hwm_msgs));
+                    auto pub = runtime.pub(popts);
 
                     sync.arrive_and_wait();
 
@@ -70,7 +66,7 @@ void TransportZMQPubSub(benchmark::State& state, Args&&... args) {
                         ts[e.seqnumber] = e.timestamp = timestamp();
                         e.seqnumber += 1;
 
-                        if (!pub->send(e)) {
+                        if (!pub.send(e)) {
                             std::cerr << "Failed to Send " << e.seqnumber << '\n';
                             send_failed = 1;
                             break;
@@ -95,22 +91,19 @@ void TransportZMQPubSub(benchmark::State& state, Args&&... args) {
                 } else {
                     std::size_t timeouts = 0;
 
-                    auto sub = p->endpoint("type=sub,endpoint=" + endpoint +
-                                           ",delay_ms=500"
-                                           ",recv_timeout_ms=100"
-                                           ",recv_buf_size=" +
-                                           std::to_string(buf_size) + ",recv_hwm_msgs=" + std::to_string(hwm_msgs));
+                    auto sub = runtime.sub(sopts);
 
                     sync.arrive_and_wait();
                     Event e{};
                     while (e.seqnumber < tosend) {
                         const auto expected = e.seqnumber + 1;
-                        if (sub->recv(e)) {
+                        if (sub.recv(e)) {
                             ts[e.seqnumber - 1] = timestamp();
                             count += 1;
                             if (expected != e.seqnumber) {
-                                //    std::cerr << "Gap in Recv #" << expected << " != #" << e.seqnumber
-                                //              << " missing:" << (e.seqnumber - expected) << '\n';
+                                std::cerr << "Gap in Recv #" << expected << " != #" << e.seqnumber
+                                          << " missing:" << (e.seqnumber - expected) << '\n';
+                                break;
                             }
                         } else {
                             ++timeouts;
@@ -145,7 +138,7 @@ void TransportZMQPubSub(benchmark::State& state, Args&&... args) {
                 for (std::size_t i = 0; i < tosend; ++i) {
                     const auto& pub = timestamps[0];
                     const auto& sub = timestamps[s];
-                    deltas.emplace_back(sub[i] == 0ns ? 0ns : (sub[i] - pub[i]));
+                    deltas.emplace_back(sub[i] == 0ns ? 100s : (sub[i] - pub[i]));
                 }
             }
 
@@ -203,18 +196,43 @@ const auto num_msgs = 1'000;
 const auto hwm_msgs = 1'000'000;
 const auto buf_size = sizeof(Event) * num_msgs;
 
-BENCHMARK_CAPTURE(TransportZMQPubSub, mem, "inproc://mem-pub-sub-perf"s, buf_size, hwm_msgs)
+const auto popts = ",delay_ms=100,send_timeout_ms=10,send_buf_size="s + std::to_string(buf_size) + ",send_hwm_msgs="s +
+                   std::to_string(hwm_msgs);
+const auto sopts = ",delay_ms=500,recv_timeout_ms=100,recv_buf_size="s + std::to_string(buf_size) + ",recv_hwm_msgs="s +
+                   std::to_string(hwm_msgs);
+
+// Use BENCHMARK_TEMPLATE1_CAPTURE after 1.8.4+ release
+BENCHMARK_CAPTURE(TransportPubSub, mem, (dlsm::ZMQ*)nullptr, "io_threads=0"s,
+                  "endpoint=inproc://mem-pub-sub-perf"s + popts, "endpoint=inproc://mem-pub-sub-perf"s + sopts)
     ->Unit(benchmark::kSecond)
     ->Iterations(1)
     ->Repetitions(repeats)
     ->Args({4, num_msgs, 0, 1});
-BENCHMARK_CAPTURE(TransportZMQPubSub, ipc, "ipc://@ipc-pub-sub-perf"s, buf_size, hwm_msgs)
+BENCHMARK_CAPTURE(TransportPubSub, ipc, (dlsm::ZMQ*)nullptr, "io_threads=2"s,
+                  "endpoint=ipc://@ipc-pub-sub-perf"s + popts, "endpoint=ipc://@ipc-pub-sub-perf"s + sopts)
     ->Unit(benchmark::kSecond)
     ->Iterations(1)
     ->Repetitions(repeats)
     ->Args({4, num_msgs, 0, 1});
-BENCHMARK_CAPTURE(TransportZMQPubSub, tcp, "tcp://127.0.0.1:5551"s, buf_size, hwm_msgs)
+BENCHMARK_CAPTURE(TransportPubSub, tcp, (dlsm::ZMQ*)nullptr, "io_threads=2"s, "endpoint=tcp://127.0.0.1:5551"s + popts,
+                  "endpoint=tcp://127.0.0.1:5551"s + sopts)
     ->Unit(benchmark::kSecond)
     ->Iterations(1)
     ->Repetitions(repeats)
     ->Args({4, num_msgs, 0, 1});
+
+// BENCHMARK_CAPTURE(TransportPubSub, iox, (dlsm::IOX*)nullptr, "name=iox,inproc=on,pools=64x10000,log=off"s,
+//                   "service=iox/test/perf,onfull=wait"s, "service=iox/test/perf,onfull=wait"s)
+//     ->Unit(benchmark::kSecond)
+//     ->Iterations(1)
+//     ->Repetitions(repeats)
+//     ->Args({4, num_msgs, 0, 1});
+
+// BENCHMARK_CAPTURE(TransportPubSub, iox, (dlsm::IOX*)nullptr,
+// "name=iox,inproc=on,monitor=on,pools=32x10000000,log=verbose"s,
+// "service=iox/test/perf,onfull=discard"s,
+// "service=iox/test/perf,onfull=discard"s)
+//     ->Unit(benchmark::kSecond)
+//     ->Iterations(1)
+//     ->Repetitions(repeats)
+//     ->Args({1, num_msgs, 0, 1});

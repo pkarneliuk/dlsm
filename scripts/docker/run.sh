@@ -13,6 +13,7 @@ docker build --tag $Tag --quiet \
     - < $Dockerfile
 docker run --rm $Interactive    \
     --user $(id -u):$(id -g)    \
+    --shm-size=1gb              \
     --volume  $Root:/target     \
     --workdir /target           \
     $Tag $@

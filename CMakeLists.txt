@@ -18,39 +18,11 @@ include(cmake/Package.cmake)
 
 configure_version(VERSION_HPP include/dlsm/Version.hpp.in)
 
-file(GLOB_RECURSE PUBLIC_HDRS   ${PROJECT_SOURCE_DIR}/include/dlsm/*.hpp ${VERSION_HPP})
-file(GLOB_RECURSE INTERNAL_HDRS ${PROJECT_SOURCE_DIR}/include/impl/*.hpp)
-
 add_subdirectory(fbs)
-
-find_package(spdlog REQUIRED)
-find_package(ZeroMQ REQUIRED)
-
-add_library               (dlsm STATIC  ${INTERNAL_HDRS} ${PUBLIC_HDRS})
-target_precompile_headers (dlsm PRIVATE ${INTERNAL_HDRS} ${PUBLIC_HDRS})
-target_include_directories(dlsm PUBLIC
-    "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>"
-    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-    "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>"
-)
-target_link_libraries     (dlsm
-    PUBLIC
-        Options
-        $<TARGET_NAME_IF_EXISTS:Coverage>
-        fbs
-        spdlog::spdlog
-    PRIVATE
-        libzmq-static
-)
-
 add_subdirectory(src)
 
-add_library               (dlsmRuntime SHARED src/Public.cpp ${INTERNAL_HDRS} ${PUBLIC_HDRS})
-set_target_properties     (dlsmRuntime PROPERTIES PUBLIC_HEADER "${PUBLIC_HDRS}")
-target_link_libraries     (dlsmRuntime PUBLIC Options PRIVATE dlsm)
-
 add_executable            (main src/main.cpp)
-target_link_libraries     (main PRIVATE dlsm)
+target_link_libraries     (main PRIVATE dlsmRuntime)
 
 install(TARGETS main dlsmRuntime Options
         EXPORT  DLSM-Development
@@ -68,8 +40,8 @@ install(EXPORT DLSM-Development
 include(CTest)
 if(BUILD_TESTING)
 set(CMAKE_CTEST_ARGUMENTS -V) # Enable verbose output on test target
-add_subdirectory(tests/unit)
 add_subdirectory(tests/perf)
+add_subdirectory(tests/unit)
 endif()
 
 include(CPack)

@@ -15,10 +15,10 @@ class DLSM(ConanFile):
     ]
     requires = [
         "flatbuffers/23.5.26@#b153646f6546daab4c7326970b6cd89c",
-        # "iceoryx/2.0.2@#9cba5c596b3fc7fb5e2174f466a12cad",
+        "iceoryx/2.0.5@#88b8a0808574661ee715ec35ebe85175",
         "nlohmann_json/3.11.2@#a35423bb6e1eb8f931423557e282c7ed",
         "spdlog/1.12.0@#c5fc262786548cbac34e6c38e16309a9",
-        "zeromq/4.3.4@#6aa4ca3273723ebed33e035ace8a265b",
+        "zeromq/4.3.5@#dd23b6f3e4e0131e696c3a0cd8092277",
     ]
 
     default_options = {

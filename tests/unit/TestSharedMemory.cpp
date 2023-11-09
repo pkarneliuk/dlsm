@@ -66,7 +66,8 @@ TEST(SharedMemory, DISABLED_HugePages2MB) {
     //  watch -n 1 "ls -la /dev/shm && grep '' -R /sys/kernel/mm/hugepages/"
     EXPECT_NO_THROW({
         const auto size = 20 * 1024 * 1024;
-        auto owner = dlsm::SharedMemory::create("name=/unit-test-4,create=on,huge2mb=on,size=" + std::to_string(size));
+        auto owner = dlsm::SharedMemory::create(std::string("name=/unit-test-4,create=on,huge2mb=on,size=") +
+                                                std::to_string(size));
         EXPECT_EQ(owner->name(), "/unit-test-4");
         EXPECT_EQ(owner->size(), size);
         EXPECT_NE(owner->address(), nullptr);

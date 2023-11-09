@@ -21,16 +21,28 @@ concept PayloadSequence = PayloadPOD<T> && !PayloadContiguous<C> && requires(C c
     { c.end() };
 };
 
-struct Transport {
-    struct Exception : public std::runtime_error {
-        using std::runtime_error::runtime_error;
-    };
-    struct Endpoint {
-        using UPtr = std::unique_ptr<Endpoint>;
-        virtual ~Endpoint() noexcept(false) = default;
+struct IOX;
+struct ZMQ;
 
-        virtual bool send(const void* data, const std::size_t length) = 0;
-        virtual bool recv(void* data, std::size_t& length) = 0;
+template <typename Runtime>
+struct Transport {
+    struct Pub {
+        struct Impl;
+        std::unique_ptr<Impl> p;
+
+        ~Pub();
+        void* loan(const std::uint32_t payload);
+        void publish(void* payload);
+        void release(void* payload);
+
+        bool send(const void* data, const std::size_t length) {
+            if (void* payload = loan(static_cast<std::uint32_t>(length)); payload) {
+                std::memcpy(payload, data, length);
+                publish(payload);
+                return true;
+            }
+            return false;
+        }
 
         template <dlsm::PayloadPOD POD>
         bool send(const POD& v) {
@@ -50,6 +62,49 @@ struct Transport {
                     break;
             }
             return i;
+        }
+
+        template <typename T>
+        struct Sample {
+            Pub& pub_;
+            T* sample_;
+
+            Sample(Pub& p) : pub_{p}, sample_{reinterpret_cast<T*>(p.loan(sizeof(T)))} {}
+            ~Sample() {
+                if (sample_) pub_.release(sample_);
+            }
+
+            operator bool() const { return sample_ != nullptr; }
+            T& value() { return *sample_; }
+            void publish() {
+                if (sample_) {
+                    pub_.publish(sample_);
+                    sample_ = nullptr;
+                }
+            }
+        };
+
+        template <typename T>
+        Sample<T> loan() {
+            return {*this};
+        }
+    };
+
+    struct Sub {
+        struct Impl;
+        std::unique_ptr<Impl> p;
+
+        ~Sub();
+        const void* take();
+        void release(const void* payload);
+
+        bool recv(void* data, std::size_t& length) {
+            if (const void* payload = take(); payload) {
+                std::memcpy(data, payload, length);
+                release(payload);
+                return true;
+            }
+            return false;
         }
 
         template <dlsm::PayloadPOD POD>
@@ -74,13 +129,33 @@ struct Transport {
             }
             return i;
         }
+
+        template <typename T>
+        struct Sample {
+            Sub& sub_;
+            const T* sample_;
+
+            Sample(Sub& s) : sub_{s}, sample_{reinterpret_cast<const T*>(sub_.take())} {}
+            ~Sample() {
+                if (sample_) sub_.release(sample_);
+            }
+
+            operator bool() const { return sample_ != nullptr; }
+            const T& value() { return *sample_; }
+        };
+
+        template <typename T>
+        const Sample<T> take() {
+            return {*this};
+        }
     };
 
-    using UPtr = std::unique_ptr<Transport>;
-    virtual ~Transport() noexcept(false) = default;
+    const std::unique_ptr<Runtime> ptr_;
 
-    virtual Endpoint::UPtr endpoint(const std::string_view& config) = 0;
+    Transport(std::string_view options);
+    ~Transport();
 
-    static UPtr create(const std::string_view& options);
+    Pub pub(std::string_view options);
+    Sub sub(std::string_view options);
 };
 }  // namespace dlsm
