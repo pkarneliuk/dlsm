@@ -16,11 +16,12 @@ namespace dlsm::Thread {
 
 namespace dlsm::Thread {
 
-void name(const std::string& name, std::size_t native_handle = 0);
-std::string name(std::size_t native_handle = 0);
+void name(const std::string& name, std::size_t handle = 0);
+std::string name(std::size_t handle = 0);
 
-static constexpr std::size_t AllCPU = 0xFFFF;
-void affinity(std::size_t cpuid = AllCPU, std::size_t native_handle = 0);
+static constexpr std::size_t AllCPU = 0;
+void affinity(std::size_t cpuid = AllCPU, std::size_t handle = 0);
+std::size_t getaffinity(std::size_t handle = 0);
 
 template <typename T>
 concept Yield = requires(T c) { c.pause(); };

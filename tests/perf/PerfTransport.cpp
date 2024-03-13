@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "impl/Allocator.hpp"
 #include "impl/Clock.hpp"
 #include "impl/Thread.hpp"
 #include "impl/Transport.hpp"
@@ -36,6 +37,7 @@ void TransportPubSub(benchmark::State& state, Args&&... args) {
     // clang-format on
 
     auto runtime = dlsm::Transport<std::remove_pointer_t<decltype(type)>>(ropts);
+    const auto affinity = dlsm::Thread::getaffinity();
     std::mutex state_mutex;
     const auto synchronized = [&](auto action) {
         std::lock_guard<std::mutex> guard(state_mutex);
@@ -49,14 +51,18 @@ void TransportPubSub(benchmark::State& state, Args&&... args) {
         std::vector<std::jthread> threads{1 + subscribers};
         std::barrier sync(std::ssize(threads));
 
-        using NsList = std::vector<std::chrono::nanoseconds>;
+        // using NsList = std::vector<std::chrono::nanoseconds>;
+        using NsList = std::vector<std::chrono::nanoseconds, dlsm::MAdviseAllocator<std::chrono::nanoseconds>>;
+        // using NsList = std::vector<std::chrono::nanoseconds, dlsm::MmapAllocator<std::chrono::nanoseconds>>;
         std::vector<NsList> timestamps{std::size(threads), NsList(tosend, 0ns)};
 
         for (std::size_t i = 0; auto& t : threads) {
             t = std::jthread([&, i]() {
+                if (affinity) dlsm::Thread::affinity(affinity + i);
                 auto& ts = timestamps[i];
                 std::uint64_t count = 0;
                 if (i == 0) {
+                    dlsm::Thread::name("Pub");
                     auto pub = runtime.pub(popts);
 
                     sync.arrive_and_wait();
@@ -89,9 +95,10 @@ void TransportPubSub(benchmark::State& state, Args&&... args) {
                     last_sent = count;
                     sync.arrive_and_wait();
                 } else {
-                    std::size_t timeouts = 0;
-
+                    const auto name = "Sub" + std::to_string(i);
+                    dlsm::Thread::name(name);
                     auto sub = runtime.sub(sopts);
+                    std::size_t timeouts = 0;
 
                     sync.arrive_and_wait();
                     Event e{};
@@ -120,9 +127,8 @@ void TransportPubSub(benchmark::State& state, Args&&... args) {
                         }
                     }
                     synchronized([&] {
-                        if (const auto lost = tosend - count)
-                            state.counters["Sub" + std::to_string(i) + "Lost"] = static_cast<double>(lost);
-                        if (timeouts) state.counters["Sub" + std::to_string(i) + "TO"] = static_cast<double>(timeouts);
+                        if (const auto lost = tosend - count) state.counters[name + "Lost"] = static_cast<double>(lost);
+                        if (timeouts) state.counters[name + "TO"] = static_cast<double>(timeouts);
                     });
                     sync.arrive_and_wait();
                 }

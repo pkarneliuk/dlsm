@@ -46,7 +46,9 @@ TEST(Thread, Affinity) {
         });
 
         enter.wait();
+        EXPECT_EQ(dlsm::Thread::getaffinity(t.native_handle()), 0);
         dlsm::Thread::affinity(1ULL, t.native_handle());
+        EXPECT_EQ(dlsm::Thread::getaffinity(t.native_handle()), 1ULL);
         dlsm::Thread::affinity(dlsm::Thread::AllCPU, t.native_handle());
         exit.count_down();
     });
