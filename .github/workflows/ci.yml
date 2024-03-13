@@ -31,7 +31,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install toolset
         run: |
           sudo apt-get -y install software-properties-common && sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
@@ -46,7 +46,7 @@ jobs:
           pip install conan==2.0.11 cmake==3.27.5
 
       - name: Conan cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: build/.conan2
           key: conan-${{ matrix.os }}-${{ matrix.build_type }}-${{ matrix.compiler }}-${{ matrix.opts }}-${{ hashFiles('conanfile.py', 'scripts/conan/*') }}
@@ -59,7 +59,7 @@ jobs:
 
       - name: Upload coverage reports to Codecov
         if: matrix.opts == 'coverage'
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: build/coverage
