@@ -1,7 +1,5 @@
-#include <algorithm>
 #include <atomic>
 #include <barrier>
-#include <fstream>
 #include <iostream>
 #include <mutex>
 #include <thread>
@@ -13,6 +11,7 @@
 #include "impl/Thread.hpp"
 #include "impl/Transport.hpp"
 #include "perf/Perf.hpp"
+#include "perf/Timestamps.hpp"
 
 using namespace std::literals;
 
@@ -44,17 +43,13 @@ void TransportPubSub(benchmark::State& state, Args&&... args) {
         action();
     };
 
-    const auto timestamp = []() { return dlsm::Clock::Monotonic::timestamp(); };
-
     for (auto _ : state) {
         std::atomic_uint64_t last_sent = 0, send_failed = 0;
         std::vector<std::jthread> threads{1 + subscribers};
         std::barrier sync(std::ssize(threads));
 
-        // using NsList = std::vector<std::chrono::nanoseconds>;
-        using NsList = std::vector<std::chrono::nanoseconds, dlsm::MAdviseAllocator<std::chrono::nanoseconds>>;
-        // using NsList = std::vector<std::chrono::nanoseconds, dlsm::MmapAllocator<std::chrono::nanoseconds>>;
-        std::vector<NsList> timestamps{std::size(threads), NsList(tosend, 0ns)};
+        auto timestamps =
+            Tests::Perf::Timestamps<dlsm::Clock::Monotonic, dlsm::MAdviseAllocator>{std::size(threads), tosend};
 
         for (std::size_t i = 0; auto& t : threads) {
             t = std::jthread([&, i]() {
@@ -69,7 +64,7 @@ void TransportPubSub(benchmark::State& state, Args&&... args) {
 
                     Event e{0ns, 0};
                     while (count < tosend) {
-                        ts[e.seqnumber] = e.timestamp = timestamp();
+                        ts[e.seqnumber] = e.timestamp = timestamps.ts();
                         e.seqnumber += 1;
 
                         if (!pub.send(e)) {
@@ -105,7 +100,7 @@ void TransportPubSub(benchmark::State& state, Args&&... args) {
                     while (e.seqnumber < tosend) {
                         const auto expected = e.seqnumber + 1;
                         if (sub.recv(e)) {
-                            ts[e.seqnumber - 1] = timestamp();
+                            ts[e.seqnumber - 1] = timestamps.ts();
                             count += 1;
                             if (expected != e.seqnumber) {
                                 std::cerr << "Gap in Recv #" << expected << " != #" << e.seqnumber
@@ -137,56 +132,17 @@ void TransportPubSub(benchmark::State& state, Args&&... args) {
         }
         threads.clear();
 
-        {  // Calculate delays for all samples and percentiles
-            std::vector<std::chrono::nanoseconds> deltas;
-            deltas.reserve(subscribers * tosend);
-            for (std::size_t s = 1; s <= subscribers; ++s) {
-                for (std::size_t i = 0; i < tosend; ++i) {
-                    const auto& pub = timestamps[0];
-                    const auto& sub = timestamps[s];
-                    deltas.emplace_back(sub[i] == 0ns ? 100s : (sub[i] - pub[i]));
-                }
-            }
-
-            std::sort(deltas.begin(), deltas.end());
-
-            const auto percentile = [&](double p) {
-                return deltas.at(static_cast<std::size_t>(static_cast<double>(deltas.size()) * p));
-            };
-            const auto duration = [&](std::chrono::nanoseconds ns) {
-                return std::chrono::duration<double>(ns).count();
-            };
-
-            state.counters["Min"] = duration(deltas.front());
-            state.counters["Max"] = duration(deltas.back());
-            state.counters["50%"] = duration(percentile(0.50));
-            state.counters["99%"] = duration(percentile(0.99));
-            state.counters["99.9%"] = duration(percentile(0.999));
+        // Calculate delays for all samples and percentiles
+        for (const auto& p : timestamps.percentiles()) {
+            state.counters[p.label] = std::chrono::duration<double>(p.value).count();
         }
 
-        {  // Write timestamps to files
-            const auto write = [](const auto filename, const auto& ts) {
-                std::fstream s{filename, s.trunc | s.binary | s.out};
-                if (s)
-                    s.write(reinterpret_cast<const char*>(std::data(ts)),
-                            std::ssize(ts) * static_cast<long>(sizeof(ts[0])));
-                else
-                    std::cerr << "Failed to open " << filename << " for writing" << std::endl;
-            };
-            auto replaceAll = [](auto s, std::string_view o, std::string_view n) {
-                while (s.find(o) != std::string::npos) s.replace(s.find(o), o.size(), n);
-                return s;
-            };
-            const auto testname = replaceAll(state.name(), "/", "-");
-
-            for (std::size_t i = 0; const auto& ts : timestamps) {
-                if (i == 0)
-                    write(testname + "-Pub.ns"s, ts);
-                else
-                    write(testname + "-Sub" + std::to_string(i) + ".ns"s, ts);
-                ++i;
-            }
-        }
+        // Write timestamps to files
+        auto replaceAll = [](auto s, std::string_view o, std::string_view n) {
+            while (s.find(o) != std::string::npos) s.replace(s.find(o), o.size(), n);
+            return s;
+        };
+        timestamps.write(replaceAll(state.name(), "/", "-"));
     }
 }
 }  // namespace
