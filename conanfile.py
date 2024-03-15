@@ -17,7 +17,7 @@ class DLSM(ConanFile):
         "flatbuffers/23.5.26@#b153646f6546daab4c7326970b6cd89c",
         "iceoryx/2.0.5@#88b8a0808574661ee715ec35ebe85175",
         "nlohmann_json/3.11.2@#a35423bb6e1eb8f931423557e282c7ed",
-        "spdlog/1.12.0@#c5fc262786548cbac34e6c38e16309a9",
+        "spdlog/1.13.0@#8e88198fd5b9ee31d329431a6d0ccaa2",
         "zeromq/4.3.5@#dd23b6f3e4e0131e696c3a0cd8092277",
     ]
 

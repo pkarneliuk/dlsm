@@ -13,6 +13,7 @@ target_sources            (unit PRIVATE
     TestClock.cpp
     TestLogger.cpp
     TestSharedMemory.cpp
+    TestSpinLock.cpp
     TestStr.cpp
     TestThread.cpp
     TestTransport.cpp

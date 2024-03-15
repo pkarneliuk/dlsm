@@ -10,6 +10,10 @@ make -C ./build perf && ./build/tests/perf/perf --benchmark_filter=Transport --b
 sudo perf stat                 ./build/tests/perf/perf --benchmark_filter=Transport --benchmark_counters_tabular=true
 sudo perf stat taskset -c 6-11 ./build/tests/perf/perf --benchmark_filter=Transport --benchmark_counters_tabular=true
 
+# Run SpinLock for L1d cache
+sudo perf stat -e L1-dcache-loads,L1-dcache-load-misses,mem_inst_retired.lock_loads ./build/tests/perf/perf --benchmark_filter=TASSLock
+sudo perf stat -e L1-dcache-loads,L1-dcache-load-misses,mem_inst_retired.lock_loads ./build/tests/perf/perf --benchmark_filter=TTSSLock
+
 # Run 5 repetitions with 1 iteration benchmarking
 ./build/tests/perf/perf --benchmark_filter=*    \
     --benchmark_repetitions=5                   \

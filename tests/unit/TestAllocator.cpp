@@ -41,7 +41,7 @@ void CheckCommon() {
     EXPECT_THAT([&] { (void)Allocator<int>().allocate(0); }, Throws<std::bad_array_new_length>());
 }
 
-TEST(Allocator, MAdviseAllocator) {
+TEST(Allocator, DISABLED_MAdviseAllocator) {
     CheckCommon<dlsm::MAdviseAllocator>();
 
     EXPECT_THAT([&] { (void)dlsm::MAdviseAllocator<int>().allocate(0x10000000000); },

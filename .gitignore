@@ -7,3 +7,6 @@ CMakeUserPresets.json
 
 # Measurements data
 *.ns
+
+# Linux perf
+perf.data*

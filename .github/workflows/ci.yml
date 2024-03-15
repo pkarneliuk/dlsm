@@ -26,6 +26,11 @@ jobs:
           opts: usan
         - build_type: Debug
           opts: common
+        - build_type: Debug
+          opts: tsan
+        - build_type: Debug
+          compiler: g++
+          opts: asan
 
     name: ${{ matrix.os }} ${{ matrix.build_type }} ${{ matrix.compiler }} ${{ matrix.opts }}
     runs-on: ${{ matrix.os }}
@@ -42,8 +47,12 @@ jobs:
           sudo ln -s $(which gcov-13) /usr/local/bin/gcov
           sudo ln -s $(which clang++-15) /usr/local/bin/clang++
           sudo ln -s $(which clang-15  ) /usr/local/bin/clang
+          sudo ln -s $(which llvm-cov-15) /usr/local/bin/llvm-cov
           sudo ln -s $(which clang-tidy-15) /usr/local/bin/clang-tidy
-          pip install conan==2.0.11 cmake==3.27.5
+          pip install conan==2.0.13 cmake==3.27.5
+          uname -a
+          g++ --version
+          clang++ --version
 
       - name: Conan cache
         uses: actions/cache@v4
