@@ -11,9 +11,9 @@ target_sources            (unit PRIVATE
     Flat.cpp
     TestAllocator.cpp
     TestClock.cpp
+    TestLock.cpp
     TestLogger.cpp
     TestSharedMemory.cpp
-    TestSpinLock.cpp
     TestStr.cpp
     TestThread.cpp
     TestTransport.cpp

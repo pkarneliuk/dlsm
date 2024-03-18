@@ -6,10 +6,17 @@
 
 #include "impl/Thread.hpp"
 
-namespace dlsm::SpinLock {
+namespace dlsm::Lock {
 
-// Test-and-Set SpinLock
-struct TASSLock {
+// No locking implememntation
+struct None {
+    inline bool try_lock() noexcept { return true; }
+    inline void lock() noexcept {}
+    inline void unlock() noexcept {}
+};
+
+// Test-and-Set Spinlock
+struct TASS {
     std::atomic<bool> lock_ = {false};
 
     inline bool try_lock() noexcept { return !lock_.exchange(true); }
@@ -22,8 +29,8 @@ struct TASSLock {
     inline void unlock() noexcept { lock_.store(false); }
 };
 
-// Test and Test-and-Set SpinLock
-struct TTSSLock {
+// Test and Test-and-Set Spinlock
+struct TTSS {
     std::atomic<bool> lock_ = {false};
 
     inline bool try_lock() noexcept {
@@ -54,10 +61,12 @@ concept Concept = requires(Impl s) {
     { s.lock() } noexcept -> std::same_as<void>;
     { s.unlock() } noexcept -> std::same_as<void>;
 };
-static_assert(Concept<TASSLock>);
-static_assert(Concept<TTSSLock>);
+static_assert(Concept<None>);
+static_assert(Concept<TASS>);
+static_assert(Concept<TTSS>);
 
+using Spin = TTSS;
 using StdMutex = std::mutex;
-using SpinLock = TTSSLock;
+using StdRutex = std::recursive_mutex;
 
-}  // namespace dlsm::SpinLock
+}  // namespace dlsm::Lock
