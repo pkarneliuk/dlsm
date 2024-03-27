@@ -36,7 +36,6 @@ void TransportPubSub(benchmark::State& state, Args&&... args) {
     // clang-format on
 
     auto runtime = dlsm::Transport<std::remove_pointer_t<decltype(type)>>(ropts);
-    const auto affinity = dlsm::Thread::getaffinity();
     std::mutex state_mutex;
     const auto synchronized = [&](auto action) {
         std::lock_guard<std::mutex> guard(state_mutex);
@@ -44,6 +43,9 @@ void TransportPubSub(benchmark::State& state, Args&&... args) {
     };
 
     for (auto _ : state) {
+        state.PauseTiming();
+        const auto affinity = dlsm::Thread::AllCPU;
+        dlsm::Thread::affinity(affinity.at(0));
         std::atomic_uint64_t last_sent = 0, send_failed = 0;
         std::vector<std::jthread> threads{1 + subscribers};
         std::barrier sync(std::ssize(threads));
@@ -53,14 +55,18 @@ void TransportPubSub(benchmark::State& state, Args&&... args) {
 
         for (std::size_t i = 0; auto& t : threads) {
             t = std::jthread([&, i]() {
-                if (affinity) dlsm::Thread::affinity(affinity + i);
+                if (affinity.count() > i + 1) dlsm::Thread::affinity(affinity.at(i + 1));
+
+                const auto name = (i == 0) ? "Pub"s : "Sub" + std::to_string(i);
+                dlsm::Thread::name(name);
+
                 auto& ts = timestamps[i];
                 std::uint64_t count = 0;
                 if (i == 0) {
-                    dlsm::Thread::name("Pub");
                     auto pub = runtime.pub(popts);
 
                     sync.arrive_and_wait();
+                    state.ResumeTiming();
 
                     Event e{0ns, 0};
                     while (count < tosend) {
@@ -86,12 +92,11 @@ void TransportPubSub(benchmark::State& state, Args&&... args) {
                         }
                         count += 1;
                     }
-                    synchronized([&] { state.counters["Pub"] = static_cast<double>(count); });
                     last_sent = count;
+                    synchronized([&] { state.counters[name] = static_cast<double>(count); });
                     sync.arrive_and_wait();
+                    state.PauseTiming();
                 } else {
-                    const auto name = "Sub" + std::to_string(i);
-                    dlsm::Thread::name(name);
                     auto sub = runtime.sub(sopts);
                     std::size_t timeouts = 0;
 
@@ -127,22 +132,21 @@ void TransportPubSub(benchmark::State& state, Args&&... args) {
                     });
                     sync.arrive_and_wait();
                 }
+
+                // Write timestamps to files
+                timestamps.write(i, state.name() + "-" + name);
             });
             ++i;
         }
         threads.clear();
+        dlsm::Thread::affinity(dlsm::Thread::AllCPU);
 
         // Calculate delays for all samples and percentiles
         for (const auto& p : timestamps.percentiles()) {
             state.counters[p.label] = std::chrono::duration<double>(p.value).count();
         }
 
-        // Write timestamps to files
-        auto replaceAll = [](auto s, std::string_view o, std::string_view n) {
-            while (s.find(o) != std::string::npos) s.replace(s.find(o), o.size(), n);
-            return s;
-        };
-        timestamps.write(replaceAll(state.name(), "/", "-"));
+        state.ResumeTiming();
     }
 }
 }  // namespace

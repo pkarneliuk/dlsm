@@ -32,6 +32,8 @@ This script reads binary files with `int64` samples(nanoseconds timestamps), and
 
 ## Threads Affinity and CPU Core Isolation
 ```sh
+lscpu # CPU summary
+lscpu --all --extended --output-all             # Per-core info
 lstopo-no-graphics --no-io --no-legend --of txt # Display layout of available CPUs in physical packages
 numactl --hardware # Display NUMA nodes
 sudo grubby --update-kernel=ALL --args="isolcpus=6-11" # Isolate CPU #6 - #11 from OS scheduling
