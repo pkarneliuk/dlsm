@@ -1,7 +1,7 @@
 find_package(benchmark REQUIRED benchmark)
 
 add_executable            (perf Perf.cpp)
-target_precompile_headers (perf PRIVATE Perf.hpp)
+target_precompile_headers (perf PRIVATE Perf.hpp Timestamps.hpp)
 target_include_directories(perf PRIVATE ../)
 target_link_libraries     (perf PRIVATE dlsm benchmark::benchmark)
 target_sources            (perf PRIVATE
