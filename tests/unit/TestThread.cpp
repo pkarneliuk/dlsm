@@ -61,6 +61,10 @@ TEST(Thread, Affinity) {
 
     auto cpu58 = dlsm::Thread::Mask{{5U, 8U}};
     EXPECT_EQ(cpu58.to_string(), ".....5..8");
+    std::vector<std::size_t> vec = cpu58;
+    EXPECT_EQ(vec.size(), 2);
+    EXPECT_EQ(vec[0], 5);
+    EXPECT_EQ(vec[1], 8);
     EXPECT_THAT([&] { cpu58.at(2); }, ThrowsMessage<std::runtime_error>("No available bits at index:2"));
     EXPECT_THAT([&] { cpu58.extract(3); }, ThrowsMessage<std::runtime_error>("No bits for extraction:3"));
 

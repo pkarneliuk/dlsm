@@ -1,14 +1,17 @@
 #pragma once
+#ifdef SPDLOG_ACTIVE_LEVEL
+#undef SPDLOG_ACTIVE_LEVEL
+#endif
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 
 #include <spdlog/spdlog.h>
 
-#define LOG_TRACE(...) SPDLOG_LOGGER_TRACE(log_, __VA_ARGS__)
-#define LOG_DEBUG(...) SPDLOG_LOGGER_DEBUG(log_, __VA_ARGS__)
-#define LOG_INFO(...) SPDLOG_LOGGER_INFO(log_, __VA_ARGS__)
-#define LOG_WARN(...) SPDLOG_LOGGER_WARN(log_, __VA_ARGS__)
-#define LOG_ERROR(...) SPDLOG_LOGGER_ERROR(log_, __VA_ARGS__)
-#define LOG_CRITICAL(...) SPDLOG_LOGGER_CRITICAL(log_, __VA_ARGS__)
+#define LOG_TRACE(...) SPDLOG_LOGGER_TRACE(log_, __VA_ARGS__)        // NOLINT(cppcoreguidelines-macro-usage)
+#define LOG_DEBUG(...) SPDLOG_LOGGER_DEBUG(log_, __VA_ARGS__)        // NOLINT(cppcoreguidelines-macro-usage)
+#define LOG_INFO(...) SPDLOG_LOGGER_INFO(log_, __VA_ARGS__)          // NOLINT(cppcoreguidelines-macro-usage)
+#define LOG_WARN(...) SPDLOG_LOGGER_WARN(log_, __VA_ARGS__)          // NOLINT(cppcoreguidelines-macro-usage)
+#define LOG_ERROR(...) SPDLOG_LOGGER_ERROR(log_, __VA_ARGS__)        // NOLINT(cppcoreguidelines-macro-usage)
+#define LOG_CRITICAL(...) SPDLOG_LOGGER_CRITICAL(log_, __VA_ARGS__)  // NOLINT(cppcoreguidelines-macro-usage)
 
 namespace dlsm {
 

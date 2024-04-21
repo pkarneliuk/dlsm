@@ -25,9 +25,10 @@ struct IOX;
 struct ZMQ;
 
 template <typename Runtime>
-struct Transport {
+class Transport {
+public:
     struct Pub {
-        struct Impl;
+        class Impl;
         std::unique_ptr<Impl> p;
 
         ~Pub();
@@ -91,7 +92,7 @@ struct Transport {
     };
 
     struct Sub {
-        struct Impl;
+        class Impl;
         std::unique_ptr<Impl> p;
 
         ~Sub();

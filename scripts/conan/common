@@ -21,6 +21,9 @@ CTEST_OUTPUT_ON_FAILURE=True
 GTEST_BRIEF=1
 
 [conf]
+# Specific CPU arch
+# tools.build:cflags  +=-march=alderlake
+# tools.build:cxxflags+=-march=alderlake
 # Static linking for all binaries including 3rd party libs
 tools.build:exelinkflags   +=-static-libgcc -static-libstdc++
 tools.build:sharedlinkflags+=-static-libgcc -static-libstdc++

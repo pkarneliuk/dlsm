@@ -6,10 +6,13 @@
 
 #include "unit/Mock.hpp"
 
+using testing::ContainerEq;
 using testing::Contains;
+using testing::Each;
 using testing::ElementsAre;
 using testing::ElementsAreArray;
 using testing::EndsWith;
+using testing::Eq;
 using testing::HasSubstr;
 using testing::Pair;
 using testing::StartsWith;

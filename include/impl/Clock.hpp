@@ -33,7 +33,7 @@ struct StdChrono {
         return std::chrono::duration_cast<std::chrono::nanoseconds>(StdClock::now().time_since_epoch());
     }
 
-    static constexpr std::chrono::nanoseconds resolution() noexcept {
+    static std::chrono::nanoseconds resolution() noexcept {
         return std::chrono::nanoseconds(StdClock::period::num * 1'000'000'000LL / StdClock::period::den);
     }
 };
@@ -80,7 +80,7 @@ struct GetTimeOfDay {
                                                                     std::chrono::microseconds{tv.tv_usec});
     }
 
-    static constexpr std::chrono::nanoseconds resolution() { return std::chrono::microseconds{1}; }
+    static std::chrono::nanoseconds resolution() { return std::chrono::nanoseconds{1000}; }
 };
 
 }  // namespace dlsm::Clock
