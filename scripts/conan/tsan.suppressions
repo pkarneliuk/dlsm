@@ -3,6 +3,9 @@
 
 race:Tsan_DataRace_Test
 
+# zeromq/4.3.5
+race:zmq::pipe_t::set_hwms
+
 # iceoryx/2.0.5 looks totally broken
 race:iox::posix::PosixUser::getUserName
 race:iox::popo::BasePortData::BasePortData

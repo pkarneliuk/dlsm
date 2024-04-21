@@ -42,6 +42,7 @@ add_custom_target(lcov-coverage ALL
     BYPRODUCTS  coverage/coverage_base.info
                 coverage/coverage_test.info
                 coverage/coverage.info
+    COMMAND lcov --version
     COMMAND lcov --capture --initial --directory ${CMAKE_BINARY_DIR}
             --config-file ${LCOVRC}
             --base-directory ${CMAKE_SOURCE_DIR}

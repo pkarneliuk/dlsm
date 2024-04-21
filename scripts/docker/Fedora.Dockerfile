@@ -19,7 +19,7 @@ RUN dnf -y update && dnf -y install \
     libubsan-static                 \
     libatomic                       \
     clang clang-tools-extra         \
-    lcov llvm                       \
+    lcov-1.14 llvm                  \
     python3-pip                     \
     && dnf clean all
 
