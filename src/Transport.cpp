@@ -49,10 +49,8 @@ struct IOX {
                 auto& cfg = config.m_sharedMemorySegments[0].m_mempoolConfig;
                 cfg.m_mempoolConfig.clear();
                 for (const auto& entry : dlsm::Str::split(pools, "/")) {
-                    auto pair = dlsm::Str::split(entry, "x");
-                    auto size = static_cast<std::uint32_t>(std::stoul(pair.at(0)));
-                    auto count = static_cast<std::uint32_t>(std::stoul(pair.at(1)));
-                    cfg.addMemPool({size, count});
+                    auto pair = dlsm::Str::xpair(entry);
+                    cfg.addMemPool({pair.first, pair.second});
                 }
                 cfg.optimize();
             }
