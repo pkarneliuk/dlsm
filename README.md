@@ -3,7 +3,7 @@
 [![build](https://github.com/pkarneliuk/dlsm/actions/workflows/ci.yml/badge.svg)](https://github.com/pkarneliuk/dlsm/actions/workflows/ci.yml)
 [![coverage](https://codecov.io/gh/pkarneliuk/dlsm/branch/master/graph/badge.svg)](https://codecov.io/gh/pkarneliuk/dlsm)
 
-## Intruduction
+## Introduction
 This project contains scripts and snippets in C++.
 
 ## Features
@@ -30,3 +30,4 @@ This project contains scripts and snippets in C++.
 
 ## Links and References
  - [Measuring Latency in Linux](http://btorpey.github.io/blog/2014/02/18/clock-sources-in-linux/)
+ - [Weak vs. Strong Memory Models](https://preshing.com/20120930/weak-vs-strong-memory-models/)

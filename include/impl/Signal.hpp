@@ -8,7 +8,7 @@
 
 namespace dlsm::Signal {
 
-enum Type : int {
+enum Type : std::int8_t {
     NONE = 0,
     BUS = SIGBUS,
     INT = SIGINT,

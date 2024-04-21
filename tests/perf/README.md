@@ -21,6 +21,13 @@ sudo perf stat -e L1-dcache-loads,L1-dcache-load-misses,mem_inst_retired.lock_lo
     --benchmark_enable_random_interleaving=true \
     --benchmark_counters_tabular=true           \
     --benchmark_display_aggregates_only=true
+
+# Watch memory statistics(may affect performance measurements)
+watch -n 0.2 "grep -E Mem\|Huge\|Swap\|Cache\|locked\|Shmem /proc/meminfo && free -hwv"
+# Drop all caches
+sync && echo 3 | sudo tee /proc/sys/vm/drop_caches
+# Virtual Memory statistics measurements interval, default is 1 second
+sudo sysctl vm.stat_interval=300
 ```
 
 ## [delays.py](delays.py)
@@ -39,6 +46,7 @@ numactl --hardware # Display NUMA nodes
 sudo grubby --update-kernel=ALL --args="isolcpus=6-11" # Isolate CPU #6 - #11 from OS scheduling
 sudo grubby --update-kernel=ALL --remove-args="isolcpus=6-11"
 cat /proc/cmdline       # Display kernel startup parameters
+cat /sys/devices/system/cpu/isolated  # display isolated cores
 taskset -c 0,4,6-8 pid  # Setting CPU affinity
 ```
 

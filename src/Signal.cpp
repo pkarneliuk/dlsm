@@ -3,13 +3,15 @@
 #include <cstring>
 #include <format>
 #include <system_error>
+#include <type_traits>
+#include <utility>
 
 namespace dlsm::Signal {
 
 std::string str(const Type signal) {
     const auto description = ::sigdescr_np(signal);
     // C++23 std::to_underlying()
-    if (description == nullptr) return "Unknown signal " + std::to_string(static_cast<int>(signal));
+    if (description == nullptr) return "Unknown signal " + std::to_string(std::underlying_type_t<Type>(signal));
     return description;
 }
 

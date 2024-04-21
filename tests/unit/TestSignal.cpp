@@ -14,7 +14,7 @@ TEST(Signal, Type) {
 
     EXPECT_NO_THROW(dlsm::Signal::send(dlsm::Signal::NONE););
 
-    EXPECT_THAT([] { dlsm::Signal::send(static_cast<dlsm::Signal::Type>(-1)); },
+    EXPECT_THAT([] { dlsm::Signal::send(static_cast<dlsm::Signal::Type>(-1)); },  // NOLINT
                 ThrowsMessage<std::runtime_error>(StartsWith("Signal::send(-1) failed: Invalid argument")));
 }
 

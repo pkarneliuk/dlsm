@@ -1,3 +1,5 @@
+# See: https://clang.llvm.org/extra/clang-tidy/
+
 Checks: '
 clang-diagnostic-*,
 clang-analyzer-*,
@@ -7,18 +9,17 @@ misc-*,
 modernize-*,
 performance-*,
 portability-*,
-
--cppcoreguidelines-avoid-const-or-ref-data-members
--cppcoreguidelines-avoid-magic-numbers
--cppcoreguidelines-pro-bounds-pointer-arithmetic
--cppcoreguidelines-pro-type-reinterpret-cast
--cppcoreguidelines-special-member-functions
--hicpp-braces-around-statements
--misc-const-correctness
--misc-include-cleaner
--misc-non-private-member-variables-in-classes
--modernize-use-trailing-return-type
--modernize-use-nodiscard
+-cppcoreguidelines-avoid-const-or-ref-data-members,
+-cppcoreguidelines-avoid-magic-numbers,
+-cppcoreguidelines-pro-bounds-pointer-arithmetic,
+-cppcoreguidelines-pro-type-reinterpret-cast,
+-cppcoreguidelines-special-member-functions,
+-hicpp-braces-around-statements,
+-misc-const-correctness,
+-misc-include-cleaner,
+-misc-non-private-member-variables-in-classes,
+-modernize-use-trailing-return-type,
+-modernize-use-nodiscard,
 '
 WarningsAsErrors: '
 clang-diagnostic-*,

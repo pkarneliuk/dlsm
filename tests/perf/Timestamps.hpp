@@ -10,7 +10,7 @@
 
 namespace Tests::Perf {
 
-template <dlsm::Clock::Concept Clock = dlsm::Clock::System, template <typename> typename Allocator = std::allocator>
+template <dlsm::Clock::Concept Clock = dlsm::Clock::Steady, template <typename> typename Allocator = std::allocator>
 struct Timestamps {
     static constexpr std::chrono::nanoseconds Initial{0}, Max{100'000'000};
     static constexpr std::chrono::nanoseconds delta(const std::chrono::nanoseconds& begin,
@@ -26,12 +26,13 @@ struct Timestamps {
     Timestamps(std::size_t lists, std::size_t samples) : lists_{lists, List(samples, Initial)} {}
     List& operator[](std::size_t i) { return lists_.at(i); }
 
-    Timestamps::List delays(const std::size_t master = 0) const {
+    Timestamps::List delays(double skipFirst = 0.0, const std::size_t master = 0) const {
         if (lists_.size() <= 1) return {};
 
         const auto subscribers = lists_.size() - 1;  // - master
         const auto parallel = lists_[0].size() > 100'000;
-        Timestamps::List deltas(subscribers * lists_[0].size(), Initial);
+        const auto skip = static_cast<std::size_t>(double(lists_[0].size()) * (skipFirst / 100.0));
+        Timestamps::List deltas(subscribers * (lists_[0].size() - skip), Initial);
         auto dst = std::begin(deltas);
 
         std::vector<std::future<void>> handles;
@@ -41,15 +42,15 @@ struct Timestamps {
         for (std::size_t s = 0; s < lists_.size(); ++s) {
             if (s == master) continue;
             const auto& sub = lists_[s];  // end samples
-            auto i1 = std::cbegin(pub);
+            auto i1 = std::cbegin(pub) + static_cast<std::ptrdiff_t>(skip);
             auto i2 = std::cend(pub);
-            auto i3 = std::cbegin(sub);
+            auto i3 = std::cbegin(sub) + static_cast<std::ptrdiff_t>(skip);
             if (parallel) {
                 handles.emplace_back(std::async(std::launch::async, [=]() { std::transform(i1, i2, i3, dst, delta); }));
             } else {
                 std::transform(i1, i2, i3, dst, delta);
             }
-            dst += static_cast<long>(pub.size());
+            dst += i2 - i1;
         }
         handles.clear();
         return deltas;
@@ -61,7 +62,9 @@ struct Timestamps {
     };
 
     // Calculate percentiles of delays for all samples
-    std::vector<Percentile> percentiles(const std::size_t master = 0) const { return percentiles(delays(master)); }
+    std::vector<Percentile> percentiles(double skipFirst = 0.0, std::size_t master = 0) const {
+        return percentiles(delays(skipFirst, master));
+    }
 
     static std::vector<Percentile> percentiles(List deltas) {
         if (deltas.empty()) return {};
