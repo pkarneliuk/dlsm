@@ -15,6 +15,7 @@ target_include_directories(dlsm PUBLIC
 target_sources            (dlsm PRIVATE
     Logger.cpp
     SharedMemory.cpp
+    Signal.cpp
     Str.cpp
     Thread.cpp
     Transport.cpp

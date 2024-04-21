@@ -13,7 +13,9 @@ target_sources            (unit PRIVATE
     TestClock.cpp
     TestLock.cpp
     TestLogger.cpp
+    TestMemory.cpp
     TestSharedMemory.cpp
+    TestSignal.cpp
     TestStr.cpp
     TestThread.cpp
     TestTransport.cpp
