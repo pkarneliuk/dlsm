@@ -4,12 +4,20 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 
 # Interface library with coverage build options
 add_library           (Coverage INTERFACE)
-target_compile_options(Coverage INTERFACE --coverage -O0 -g)
+target_compile_options(Coverage INTERFACE --coverage -O0 -g -fprofile-update=atomic)
 target_link_libraries (Coverage INTERFACE --coverage)
 
 # Find tools
 find_program(LCOV lcov REQUIRED)
 find_program(GENHTML genhtml REQUIRED)
+execute_process(COMMAND ${LCOV} --version OUTPUT_VARIABLE LCOV_VERSION_OUT)
+if(LCOV_VERSION_OUT MATCHES "lcov: LCOV version 2.*")
+    set(LCOV_IGNORE_ERRORS
+        --ignore-errors inconsistent,inconsistent
+        --ignore-errors gcov,gcov)
+    set(GENHTML_IGNORE_ERRORS
+        --ignore-errors inconsistent,inconsistent)
+endif()
 
 set(GCOVTOOL gcov)
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -49,6 +57,7 @@ add_custom_target(lcov-coverage ALL
             --output-file coverage_base.info
             --include '${CMAKE_SOURCE_DIR}/src/*'
             --include '${CMAKE_SOURCE_DIR}/include/*'
+            ${LCOV_IGNORE_ERRORS}
             --quiet
     COMMAND lcov --zerocounters --directory ${CMAKE_BINARY_DIR}
             --quiet
@@ -59,16 +68,20 @@ add_custom_target(lcov-coverage ALL
             --output-file coverage_test.info
             --include '${CMAKE_SOURCE_DIR}/src/*'
             --include '${CMAKE_SOURCE_DIR}/include/*'
+            ${LCOV_IGNORE_ERRORS}
             --quiet
     COMMAND lcov --config-file ${LCOVRC}
             -a coverage_base.info
             -a coverage_test.info
             --output-file coverage.info
+            ${LCOV_IGNORE_ERRORS}
             --quiet
     COMMAND genhtml coverage.info --output-directory .
             --title "${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION} ${CMAKE_BUILD_TYPE}"
             --config-file ${LCOVRC}
             --prefix ${CMAKE_SOURCE_DIR}
+            ${GENHTML_IGNORE_ERRORS}
+            --quiet
 )
     endif()
 endif()

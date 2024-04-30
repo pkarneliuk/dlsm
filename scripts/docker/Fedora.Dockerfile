@@ -1,4 +1,4 @@
-FROM fedora:39
+FROM fedora:40
 
 ARG UNAME=user
 ARG UID=1000
@@ -19,9 +19,9 @@ RUN dnf -y update && dnf -y install \
     libubsan-static                 \
     libatomic                       \
     clang clang-tools-extra         \
-    lcov-1.14 llvm                  \
+    lcov llvm                       \
     python3-pip                     \
     && dnf clean all
 
 RUN pip install                     \
-    conan==2.0.13 cmake==3.27.5
+    conan==2.2.3 cmake==3.29.2

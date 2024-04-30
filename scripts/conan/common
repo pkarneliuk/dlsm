@@ -6,11 +6,9 @@
 [settings]
 os=Linux
 arch=x86_64
-compiler=gcc
-compiler.version=13
 
-[system_tools]
-cmake/3.27
+[platform_tool_requires]
+cmake/3.29
 
 [buildenv]
 # Generate documentation

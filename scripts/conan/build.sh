@@ -7,7 +7,7 @@ Type=${1:-Release}
 Compiler=${2:-g++}
 Opts=(`echo ${3} | tr ',' ' '`)
 # Major compiler version
-Version=$($Compiler --version | sed -nE "s/^.*(clang version|g\+\+.*)\s([0-9]+).*$/\2/p")
+Version=$($Compiler --version | sed -nE "s/^.*(clang version|g\+\+.*)\s([0-9]+)\..*$/\2/p")
 # Convert C++ compiler to relevant C compiler
 CCompiler=$(echo $Compiler | sed -E "s/clang\+\+/clang/; s/g\+\+/gcc/")
 # Just clang or gcc for Conan
@@ -27,6 +27,8 @@ export CXX=$Compiler
 
 export CONAN_HOME=$(pwd)/$Dir/.conan2 # place for .conan2 with caches, profiles and packages
 
+conan config install ${Root}/scripts/conan/settings_user.yml
+
 conan $Command $Root                \
     -of $Dir                        \
     --build=missing                 \
@@ -34,5 +36,6 @@ conan $Command $Root                \
     -s build_type=$Type             \
     -s compiler=$ConanCompiler      \
     -s compiler.version=$Version    \
+    -s compiler.cppstd=20           \
     -s compiler.libcxx=libstdc++11  \
     $ProfilesHost $ProfilesBuild    \

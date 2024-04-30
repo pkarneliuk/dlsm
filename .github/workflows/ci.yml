@@ -49,7 +49,7 @@ jobs:
           sudo ln -s $(which clang-15  ) /usr/local/bin/clang
           sudo ln -s $(which llvm-cov-15) /usr/local/bin/llvm-cov
           sudo ln -s $(which clang-tidy-15) /usr/local/bin/clang-tidy
-          pip install conan==2.0.13 cmake==3.27.5
+          pip install conan==2.2.3 cmake==3.29.2
           uname -a
           g++ --version
           clang++ --version
