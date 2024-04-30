@@ -33,9 +33,10 @@ sudo sysctl vm.stat_interval=300
 ## [delays.py](delays.py)
 This script reads binary files with `int64` samples(nanoseconds timestamps), and plots them as `master` and `signals` delays relative to `master`.
 ```sh
-# Display Pub1.ns as master and delays of Sub1/Sub2/Sub3/Sub4.ns signals relative to Pub1
+# Display Pub.ns as master and delays of Sub1/Sub2/Sub3/Sub4.ns signals relative to Pub.ns
 ./tests/perf/delays.py ./build/tests/perf/TransportPubSub-mem-*
 ```
+![Disruptor 1P4C Timestamps](../../docs/images/delays-Disruptor-1P4C.png)
 
 ## Threads Affinity and CPU Core Isolation
 ```sh

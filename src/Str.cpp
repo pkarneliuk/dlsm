@@ -62,7 +62,7 @@ void copy(std::string_view src, std::span<char> dst) {
     }
 
     auto len = std::min(std::size(dst) - 1, std::size(src));
-    auto end = std::copy(std::begin(src), std::begin(src) + len, std::begin(dst));
+    auto end = std::copy_n(std::begin(src), len, std::begin(dst));
     std::fill(end, std::end(dst), '\0');
 }
 }  // namespace dlsm::Str

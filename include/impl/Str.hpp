@@ -1,8 +1,10 @@
 #pragma once
 
 #include <array>
+#include <cstdint>
 #include <map>
 #include <source_location>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>

@@ -11,6 +11,8 @@ target_sources            (unit PRIVATE
     Flat.cpp
     TestAllocator.cpp
     TestClock.cpp
+    TestDisruptor.cpp
+    TestDisruptorGraph.cpp
     TestLock.cpp
     TestLogger.cpp
     TestMemory.cpp

@@ -12,6 +12,8 @@ target_include_directories(dlsm PUBLIC
     "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>"
 )
 target_sources            (dlsm PRIVATE
+    Disruptor.cpp
+    DisruptorGraph.cpp
     Logger.cpp
     SharedMemory.cpp
     Signal.cpp

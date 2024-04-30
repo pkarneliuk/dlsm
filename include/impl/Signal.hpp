@@ -4,6 +4,7 @@
 
 #include <array>
 #include <atomic>
+#include <cstdint>
 #include <string>
 
 namespace dlsm::Signal {

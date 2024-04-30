@@ -40,6 +40,7 @@ install(EXPORT DLSM-Development
 include(CTest)
 if(BUILD_TESTING)
 set(CMAKE_CTEST_ARGUMENTS -V) # Enable verbose output on test target
+add_subdirectory(tests/apps)
 add_subdirectory(tests/perf)
 add_subdirectory(tests/unit)
 endif()

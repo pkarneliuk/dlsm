@@ -6,6 +6,7 @@ target_include_directories(perf PRIVATE ../)
 target_link_libraries     (perf PRIVATE dlsm benchmark::benchmark)
 target_sources            (perf PRIVATE
     PerfClock.cpp
+    PerfDisruptor.cpp
     PerfLock.cpp
     PerfTransport.cpp
 )
