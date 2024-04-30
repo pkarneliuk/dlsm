@@ -6,64 +6,6 @@
 
 using namespace std::literals;
 
-TEST(Transport, DISABLED_IOXConstruction) {
-    using Transport = dlsm::Transport<dlsm::IOX>;
-    auto impl = Transport("name=iox,inproc=on,pools=64x1000,log=off,monitor=on");
-
-    EXPECT_THAT([] { Transport(""); }, ThrowsMessage<std::invalid_argument>("Missing required key=value for key:name"))
-        << "Missing configuration values";
-
-    EXPECT_THAT([] { Transport("name=iox,inproc=on,log=bad"); }, ThrowsMessage<std::out_of_range>("map::at"))
-        << "Invalid configuration values";
-
-    EXPECT_THAT([&] { impl.pub("service=bad"); },
-                ThrowsMessage<std::invalid_argument>(
-                    "Unexpected IOX option value: service=bad expected: service/instance/event"));
-
-    EXPECT_NO_THROW(impl.pub("service=test/i/test"));
-    EXPECT_NO_THROW(impl.sub("service=test/i/test"));
-
-    EXPECT_NO_THROW(impl.pub("service=test/i/test,history=10,oncreate=off,onfull=wait,node=Pub"));
-    EXPECT_NO_THROW(impl.sub("service=test/i/test,history=10,oncreate=off,onfull=wait,node=Sub,capacity=5"));
-}
-
-TEST(Transport, DISABLED_IOXPubSub) {
-    auto impl = dlsm::Transport<dlsm::IOX>("name=iox,inproc=on,pools=64x1000,log=off");
-
-    auto pub = impl.pub("service=test/i/test");
-    auto sub = impl.sub("service=test/i/test");
-
-    {
-        auto s = pub.loan<int>();
-        ASSERT_TRUE(s);
-        s.value() = 42;
-        s.publish();
-    }
-    {
-        auto s = sub.take<int>();
-        ASSERT_TRUE(s);
-        EXPECT_EQ(s.value(), 42);
-    }
-
-    struct Payload {
-        int data = 42;
-
-        bool operator==(const Payload& that) const { return this->data == that.data; }
-    };
-
-    const auto SendRecv = [&](const auto& tosend, auto torecv) {
-        EXPECT_TRUE(pub.send(tosend));
-        EXPECT_TRUE(sub.recv(torecv));
-        EXPECT_EQ(torecv, tosend);
-    };
-    SendRecv(1234, 0);
-    SendRecv("1234", "1234"s);
-    SendRecv(Payload{42}, Payload{0});
-    SendRecv("std::string"s, "std__string"s);
-    SendRecv(std::vector<Payload>{{3}, {2}, {1}}, std::vector<Payload>{{1}, {2}, {3}});
-    SendRecv(std::list<int>{1, 2, 3, 4}, std::list<int>{5, 6, 7, 8});
-}
-
 TEST(Transport, ZMQConstruction) {
     using Transport = dlsm::Transport<dlsm::ZMQ>;
     auto impl = Transport("io_threads=1");

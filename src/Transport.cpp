@@ -1,16 +1,6 @@
 #include "impl/Transport.hpp"
 
 #include <zmq.h>
-
-#include <iceoryx_hoofs/log/logging.hpp>
-#include <iceoryx_posh/iceoryx_posh_config.hpp>
-#include <iceoryx_posh/internal/roudi/roudi.hpp>
-#include <iceoryx_posh/popo/untyped_publisher.hpp>
-#include <iceoryx_posh/popo/untyped_subscriber.hpp>
-#include <iceoryx_posh/roudi/iceoryx_roudi_components.hpp>
-#include <iceoryx_posh/roudi/roudi_config.hpp>
-#include <iceoryx_posh/runtime/posh_runtime.hpp>
-#include <iceoryx_posh/runtime/posh_runtime_single_process.hpp>
 #include <map>
 #include <memory>
 #include <thread>
@@ -18,132 +8,6 @@
 #include "impl/Str.hpp"
 
 namespace dlsm {
-
-struct IOX {
-    std::unique_ptr<iox::roudi::IceOryxRouDiComponents> components_;
-    std::unique_ptr<iox::roudi::RouDi> roudi_;
-    std::unique_ptr<iox::runtime::PoshRuntimeSingleProcess> runtime_;
-
-    IOX(std::string_view options) {
-        const auto opts = dlsm::Str::ParseOpts(options);
-        auto name = iox::RuntimeName_t{iox::cxx::TruncateToCapacity, opts.required("name")};
-
-        if (opts.get("inproc", "default") == "on") {
-            using L = iox::log::LogLevel;
-            static const auto levels = std::map<std::string_view, L>{
-                // clang-format off
-                {"off",     L::kOff},
-                {"fatal",   L::kFatal},
-                {"error",   L::kError},
-                {"warning", L::kWarn},
-                {"info",    L::kInfo},
-                {"debug",   L::kDebug},
-                {"verbose", L::kVerbose},
-                // clang-format on
-            };
-            iox::log::LogManager::GetLogManager().SetDefaultLogLevel(levels.at(opts.get("log", "info")));
-
-            auto config = iox::RouDiConfig_t().setDefaults();
-
-            if (const auto pools = opts.get("pools", "default"); pools != "default") {  // 64x10000/128x1000/512x100
-                auto& cfg = config.m_sharedMemorySegments[0].m_mempoolConfig;
-                cfg.m_mempoolConfig.clear();
-                for (const auto& entry : dlsm::Str::split(pools, "/")) {
-                    auto pair = dlsm::Str::xpair(entry);
-                    cfg.addMemPool({pair.first, pair.second});
-                }
-                cfg.optimize();
-            }
-
-            components_ = std::make_unique<iox::roudi::IceOryxRouDiComponents>(config);
-
-            auto params = iox::roudi::RouDi::RoudiStartupParameters{
-                ((opts.get("monitor", "default") == "on") ? iox::roudi::MonitoringMode::ON
-                                                          : iox::roudi::MonitoringMode::OFF),
-                false,
-            };
-
-            roudi_ =
-                std::make_unique<iox::roudi::RouDi>(components_->rouDiMemoryManager, components_->portManager, params);
-            runtime_ = std::make_unique<iox::runtime::PoshRuntimeSingleProcess>(name);
-        } else {
-            iox::runtime::PoshRuntime::initRuntime(name);
-        }
-    }
-
-    static iox::capro::ServiceDescription service(const dlsm::Str::ParseOpts& opts) {
-        const auto str = opts.required("service");
-        const auto p = dlsm::Str::split(str, "/");
-        if (p.size() != 3) {
-            throw std::invalid_argument("Unexpected IOX option value: service=" + str +
-                                        " expected: service/instance/event");
-        }
-        auto s = iox::capro::IdString_t{iox::cxx::TruncateToCapacity, p[0]};
-        auto i = iox::capro::IdString_t{iox::cxx::TruncateToCapacity, p[1]};
-        auto e = iox::capro::IdString_t{iox::cxx::TruncateToCapacity, p[2]};
-        return {s, i, e};
-    };
-    static iox::NodeName_t node(const dlsm::Str::ParseOpts& opts) {
-        return {iox::cxx::TruncateToCapacity, opts.get("node", "")};
-    }
-    static std::uint64_t history(const dlsm::Str::ParseOpts& opts) { return std::stoull(opts.get("history", "0")); }
-
-    class Pub {
-        iox::popo::UntypedPublisher pub_;
-
-        iox::popo::PublisherOptions options(const dlsm::Str::ParseOpts& opts) {
-            auto discard = opts.get("onfull", "discard") == "discard";
-            using P = iox::popo::ConsumerTooSlowPolicy;
-            return {
-                .historyCapacity = history(opts),
-                .nodeName = node(opts),
-                .offerOnCreate = opts.get("oncreate", "on") == "on",
-                .subscriberTooSlowPolicy = discard ? P::DISCARD_OLDEST_DATA : P::WAIT_FOR_CONSUMER,
-            };
-        }
-
-    public:
-        Pub([[maybe_unused]] IOX& iox, std::string_view config) : Pub{iox, dlsm::Str::ParseOpts{config}} {}
-        Pub([[maybe_unused]] IOX& iox, const dlsm::Str::ParseOpts& opts) : pub_{service(opts), options(opts)} {}
-
-        inline void* loan(const std::uint32_t payload) {
-            void* result = nullptr;
-            pub_.loan(payload).and_then([&](auto& payload) { result = payload; });
-            return result;
-        }
-        inline void publish(void* payload) { pub_.publish(payload); }
-        inline void release(void* payload) { pub_.release(payload); }
-    };
-
-    class Sub {
-        iox::popo::UntypedSubscriber sub_;
-
-        iox::popo::SubscriberOptions options(const dlsm::Str::ParseOpts& opts) {
-            auto discard = opts.get("onfull", "discard") == "discard";
-            auto capacity = std::stoull(opts.get("capacity", "0"));
-            using P = iox::popo::QueueFullPolicy;
-            return {
-                .queueCapacity = capacity ? capacity : iox::popo::SubscriberChunkQueueData_t::MAX_CAPACITY,
-                .historyRequest = history(opts),
-                .nodeName = node(opts),
-                .subscribeOnCreate = opts.get("oncreate", "on") == "on",
-                .queueFullPolicy = discard ? P::DISCARD_OLDEST_DATA : P::BLOCK_PRODUCER,
-                .requiresPublisherHistorySupport = false,
-            };
-        }
-
-    public:
-        Sub([[maybe_unused]] IOX& iox, std::string_view config) : Sub{iox, dlsm::Str::ParseOpts{config}} {}
-        Sub([[maybe_unused]] IOX& iox, const dlsm::Str::ParseOpts& opts) : sub_{service(opts), options(opts)} {}
-
-        inline const void* take() {
-            const void* result = nullptr;
-            sub_.take().and_then([&](const void* payload) { result = payload; });
-            return result;
-        }
-        inline void release(const void* payload) { sub_.release(payload); }
-    };
-};
 
 struct ZMQ {
     static_assert((ZMQ_VERSION_MAJOR == 4) && (ZMQ_VERSION_MINOR >= 3), "ZeroMQ 4.3+ is required");
@@ -359,7 +223,6 @@ void Transport<Runtime>::Sub::release(const void* payload) {
     p->release(payload);
 }
 
-template class Transport<IOX>;
 template class Transport<ZMQ>;
 
 }  // namespace dlsm

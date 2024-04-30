@@ -1,4 +1,3 @@
-find_package(iceoryx REQUIRED COMPONENTS iceoryx_posh)
 find_package(spdlog REQUIRED)
 find_package(ZeroMQ REQUIRED)
 
@@ -26,11 +25,9 @@ target_link_libraries     (dlsm
         $<TARGET_NAME_IF_EXISTS:Coverage>
         fbs
         spdlog::spdlog
+        atomic
     PRIVATE
         libzmq-static
-        iceoryx_posh::iceoryx_posh
-        iceoryx_posh::iceoryx_posh_config
-        iceoryx_posh::iceoryx_posh_roudi
 )
 
 add_library               (dlsmRuntime SHARED Public.cpp ${INTERNAL_HDRS} ${PUBLIC_HDRS})
