@@ -1,12 +1,21 @@
 #pragma once
 
+#include <chrono>
 #include <cstdint>
+#include <cstddef>
 #include <cstring>
 #include <memory>
+#include <span>
 #include <string_view>
 #include <type_traits>
 
 namespace dlsm {
+
+template <typename C, typename T = typename C::value_type>
+concept DataSize = requires(C c) {
+    { std::data(c) };
+    { std::size(c) };
+};
 
 template <typename T>
 concept PayloadPOD = std::is_trivially_destructible_v<T> && std::is_standard_layout_v<T> && sizeof(T) <= 1024;
@@ -23,24 +32,24 @@ concept PayloadSequence = PayloadPOD<T> && !PayloadContiguous<C> && requires(C c
     { c.end() };
 };
 
-struct IOX;
 struct ZMQ;
 
 template <typename Runtime>
 class Transport {
 public:
+    using Data = std::span<std::byte>;
     struct Pub {
         class Impl;
         std::unique_ptr<Impl> p;
 
         ~Pub();
-        void* loan(const std::uint32_t payload);
-        void publish(void* payload);
-        void release(void* payload);
+        Data loan(const std::size_t length);
+        void publish(Data payload);
+        void release(Data payload);
 
         bool send(const void* data, const std::size_t length) {
-            if (void* payload = loan(static_cast<std::uint32_t>(length)); payload) {
-                std::memcpy(payload, data, length);
+            if (auto payload = loan(length); !payload.empty()) {
+                std::memcpy(payload.data(), data, length);
                 publish(payload);
                 return true;
             }
@@ -70,19 +79,18 @@ public:
         template <typename T>
         struct Sample {
             Pub& pub_;
-            T* sample_;
+            Data sample_;
 
-            Sample(Pub& p) : pub_{p}, sample_{reinterpret_cast<T*>(p.loan(sizeof(T)))} {}
+            Sample(Pub& p) : pub_{p}, sample_{p.loan(sizeof(T))} {}
             ~Sample() {
-                if (sample_) pub_.release(sample_);
+                if (!sample_.empty()) pub_.release(sample_);
             }
 
-            operator bool() const { return sample_ != nullptr; }
-            T& value() { return *sample_; }
+            operator bool() const { return !sample_.empty(); }
+            T& value() { return *reinterpret_cast<T*>(sample_.data()); }
             void publish() {
-                if (sample_) {
+                if (!sample_.empty()) {
                     pub_.publish(sample_);
-                    sample_ = nullptr;
                 }
             }
         };
@@ -98,12 +106,12 @@ public:
         std::unique_ptr<Impl> p;
 
         ~Sub();
-        const void* take();
-        void release(const void* payload);
+        Data take();
+        void release(Data payload);
 
         bool recv(void* data, std::size_t& length) {
-            if (const void* payload = take(); payload) {
-                std::memcpy(data, payload, length);
+            if (Data payload = take(); !payload.empty()) {
+                std::memcpy(data, payload.data(), length);
                 release(payload);
                 return true;
             }
@@ -117,8 +125,14 @@ public:
         }
         template <dlsm::PayloadContiguous Contiguous>
         std::size_t recv(Contiguous& c) {
-            std::size_t size = std::size(c) * sizeof(typename Contiguous::value_type);
-            return recv(std::data(c), size) ? size : 0UL;
+            if (Data payload = take(); !payload.empty()) {
+                const auto n = payload.size() / sizeof(typename Contiguous::value_type);
+                c.resize(n);
+                std::memcpy(std::data(c), payload.data(), n * sizeof(typename Contiguous::value_type));
+                release(payload);
+                return n;
+            }
+            return 0;
         }
         template <dlsm::PayloadSequence Sequence>
         std::size_t recv(Sequence& c) {
@@ -136,21 +150,45 @@ public:
         template <typename T>
         struct Sample {
             Sub& sub_;
-            const T* sample_;
+            Data sample_;
 
-            Sample(Sub& s) : sub_{s}, sample_{reinterpret_cast<const T*>(sub_.take())} {}
+            Sample(Sub& s) : sub_{s}, sample_{sub_.take()} {}
             ~Sample() {
-                if (sample_) sub_.release(sample_);
+                if (!sample_.empty()) sub_.release(sample_);
             }
 
-            operator bool() const { return sample_ != nullptr; }
-            const T& value() { return *sample_; }
+            operator bool() const { return !sample_.empty(); }
+            const T& value() { return *reinterpret_cast<const T*>(sample_.data()); }
         };
 
         template <typename T>
         const Sample<T> take() {
             return {*this};
         }
+    };
+
+    struct Poller {
+        class Impl;
+        std::unique_ptr<Impl> p;
+
+
+        struct Timer {
+            using Ptr = std::unique_ptr<Timer>;
+            struct Handler {
+                virtual ~Handler() = default;
+                virtual void handler(Timer& timer) = 0;
+            };
+            virtual ~Timer() = default;
+            virtual bool active() = 0;
+            virtual void cancel() = 0;
+            virtual void reset() = 0;
+            virtual void set(std::chrono::milliseconds interval) = 0;
+        };
+
+        ~Poller();
+
+        Timer::Ptr timer(Timer::Handler& handler, std::chrono::milliseconds interval);
+        std::size_t once(std::chrono::milliseconds timeout = 0);
     };
 
     const std::unique_ptr<Runtime> ptr_;
@@ -160,5 +198,6 @@ public:
 
     Pub pub(std::string_view options);
     Sub sub(std::string_view options);
+    Poller poller();
 };
 }  // namespace dlsm

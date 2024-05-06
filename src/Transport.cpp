@@ -5,6 +5,7 @@
 #include <map>
 #include <memory>
 #include <thread>
+#include <utility>
 
 #include "impl/Str.hpp"
 
@@ -46,6 +47,23 @@ struct ZMQ {
                                             " with:" + e.what());
             }
     }
+
+    using Data = Transport<ZMQ>::Data;
+
+
+    struct Msg {
+        zmq_msg_t msg_;
+        Msg() {
+            zmq_msg_init(&msg_);
+        }
+        Data data() {
+            return Data{reinterpret_cast<std::byte*>(zmq_msg_data(&msg_)), zmq_msg_size(&msg_)};
+        }
+        ~Msg() {
+            zmq_msg_close(&msg_);
+        }
+    };
+
 
     struct Endpoint {
         zmq_msg_t msg_;
@@ -135,35 +153,152 @@ struct ZMQ {
     public:
         Pub(ZMQ& zmq, std::string_view config) : Endpoint{zmq, ZMQ_PUB, dlsm::Str::ParseOpts{config}} {}
 
-        inline void* loan(const std::uint32_t payload) {
-            if (int ret = zmq_msg_init_size(&msg_, payload); ret == 0) return zmq_msg_data(&msg_);
-            return nullptr;
+        inline Data loan(const std::size_t length) {
+            if (int ret = zmq_msg_init_size(&msg_, length); ret != 0) return Data{};
+            return Data{reinterpret_cast<std::byte*>(zmq_msg_data(&msg_)), zmq_msg_size(&msg_)};
         }
-        inline void publish([[maybe_unused]] void* payload) {
+        inline void publish([[maybe_unused]] Data payload) {
             const int ret = zmq_msg_send(&msg_, socket_.get(), 0);
             if (-1 == ret) [[unlikely]] {
                 const auto code = zmq_errno();
                 check(false, "Send " + std::to_string(code) + " ret: " + std::to_string(ret));
             }
         }
-        inline void release([[maybe_unused]] void* payload) { zmq_msg_close(&msg_); }
+        inline void release([[maybe_unused]] Data payload) { zmq_msg_close(&msg_); }
     };
 
     class Sub : private Endpoint {
     public:
         Sub(ZMQ& zmq, std::string_view config) : Endpoint{zmq, ZMQ_SUB, dlsm::Str::ParseOpts{config}} {}
 
-        const void* take() {
+        Data take() {
             zmq_msg_init(&msg_);
             if (int ret = zmq_msg_recv(&msg_, socket_.get(), 0); ret == -1) {
                 zmq_msg_close(&msg_);
                 const auto code = zmq_errno();
                 check(false, "Recv " + std::to_string(code) + " ret: " + std::to_string(ret));
-                return nullptr;
             }
-            return zmq_msg_data(&msg_);
+
+            return Data{reinterpret_cast<std::byte*>(zmq_msg_data(&msg_)), zmq_msg_size(&msg_)};
         }
-        void release([[maybe_unused]] const void* payload) { zmq_msg_close(&msg_); }
+        void release([[maybe_unused]] Data payload) { zmq_msg_close(&msg_); }
+    };
+
+    struct Poller {
+
+        struct Handler {
+            virtual ~Handler() = default;
+
+            virtual void* socket() = 0;
+            virtual void onIn(Poller& reactor) = 0;
+            virtual void onOut(Poller& reactor) = 0;
+            virtual void onError(Poller& reactor) = 0;
+        };
+        std::vector<zmq_pollitem_t> sockets_;
+        std::vector<Handler*> actions_;
+        void* timers_ = nullptr;
+
+        Poller() : timers_{zmq_timers_new()} {}
+        ~Poller() {
+            zmq_timers_destroy(&timers_);
+        }
+
+
+        struct Timer : public Transport<ZMQ>::Poller::Timer {
+            Poller& poller_;
+            Handler& handler_;
+            int id_ = -1;
+
+            static void timer([[maybe_unused]]int timer_id, void* arg) {
+                auto instance = reinterpret_cast<Timer*>(arg);
+                instance->handler_.handler(*instance);
+            }
+
+            Timer(Poller& poller, Handler& handler, std::chrono::milliseconds interval)
+            : poller_{poller}, handler_{handler} {
+                id_ = zmq_timers_add(poller.timers_, interval.count(), &timer, this);
+            }
+            ~Timer() {
+                cancel();
+            }
+            bool active() override {
+                return id_ != -1;
+            }
+            void cancel() override {
+                if(id_ != -1) {
+                    check(-1 != zmq_timers_cancel(poller_.timers_, id_), "zmq_timers_cancel()");
+                    id_ = -1;
+                }
+            }
+            void reset() override {
+                check(-1 != zmq_timers_reset(poller_.timers_, id_), "zmq_timers_reset()");
+            }
+            void set(std::chrono::milliseconds interval) override {
+                check(-1 != zmq_timers_set_interval(poller_.timers_, id_, interval.count()), "zmq_timers_set_interval()");
+            }
+        };
+
+        Timer timer(typename Transport<ZMQ>::Poller::Timer::Handler& handler, std::chrono::milliseconds interval) {
+            return Timer{*this, handler, interval};
+        }
+
+        bool has(Handler& handler) const {
+            const auto socket = handler.socket();
+            for(const auto& i : sockets_) {
+                if(i.socket == socket) return true;
+            }
+            return false;
+        }
+        void add(Handler& handler) {
+            sockets_.emplace_back(zmq_pollitem_t{
+                .socket = handler.socket(),
+                .fd = 0,
+                .events = ZMQ_POLLIN | ZMQ_POLLOUT | ZMQ_POLLERR,
+                .revents = 0
+                }
+            );
+            actions_.emplace_back(&handler);
+        }
+        void del(Handler& handler) {
+            const auto nitems = std::size(actions_);
+            for(std::size_t i = 0; i < nitems; ++i) {
+                if(actions_[i] == &handler) {
+                    std::swap(sockets_[i], sockets_.back());
+                    std::swap(actions_[i], actions_.back());
+
+                    sockets_.resize(nitems - 1);
+                    actions_.resize(nitems - 1);
+                    break;
+                }
+            }
+        }
+
+        std::size_t once(const std::chrono::milliseconds timeout) {
+            const auto nitems = std::size(sockets_);
+            long timeout_ms = timeout.count();
+            if(timeout_ms == -1) timeout_ms = zmq_timers_timeout(timers_);
+            const auto n =  zmq_poll(std::data(sockets_), static_cast<int>(nitems), timeout_ms);
+            check(n != -1, "zmq_poll()");
+
+            for(std::size_t i = 0; i < nitems; ++i) {
+                if(sockets_[i].revents & ZMQ_POLLIN) {
+
+                    Msg msg;
+                    actions_[i]->onIn(*this);
+                }
+                if(sockets_[i].revents & ZMQ_POLLOUT) {
+                    actions_[i]->onOut(*this);
+                }
+                if(sockets_[i].revents & ZMQ_POLLERR) {
+                    actions_[i]->onError(*this);
+                }
+            }
+
+            check(-1 != zmq_timers_execute(timers_), "zmq_timers_execute()");
+
+            return n;
+        }
+
     };
 };
 
@@ -187,17 +322,17 @@ template <typename Runtime>
 Transport<Runtime>::Pub::~Pub() = default;
 
 template <typename Runtime>
-void* Transport<Runtime>::Pub::loan(const std::uint32_t payload) {
-    return p->loan(payload);
+Transport<Runtime>::Data Transport<Runtime>::Pub::loan(const std::size_t length) {
+    return p->loan(length);
 }
 
 template <typename Runtime>
-void Transport<Runtime>::Pub::publish(void* payload) {
+void Transport<Runtime>::Pub::publish(Data payload) {
     p->publish(payload);
 }
 
 template <typename Runtime>
-void Transport<Runtime>::Pub::release(void* payload) {
+void Transport<Runtime>::Pub::release(Data payload) {
     p->release(payload);
 }
 
@@ -215,14 +350,38 @@ template <typename Runtime>
 Transport<Runtime>::Sub::~Sub() = default;
 
 template <typename Runtime>
-const void* Transport<Runtime>::Sub::take() {
+Transport<Runtime>::Data Transport<Runtime>::Sub::take() {
     return p->take();
 }
 
 template <typename Runtime>
-void Transport<Runtime>::Sub::release(const void* payload) {
+void Transport<Runtime>::Sub::release(Data payload) {
     p->release(payload);
 }
+
+template <typename Runtime>
+class Transport<Runtime>::Poller::Impl : public Runtime::Poller {
+    using Runtime::Poller::Poller;
+};
+
+template <typename Runtime>
+Transport<Runtime>::Poller::~Poller() = default;
+
+template <typename Runtime>
+typename Transport<Runtime>::Poller Transport<Runtime>::poller() {
+    return {std::make_unique<typename Transport<Runtime>::Poller::Impl>()};
+}
+
+template <typename Runtime>
+Transport<Runtime>::Poller::Timer::Ptr Transport<Runtime>::Poller::timer(Timer::Handler& handler, std::chrono::milliseconds interval) {
+    return std::make_unique<ZMQ::Poller::Timer>(*p, handler, interval);
+}
+
+template <typename Runtime>
+std::size_t Transport<Runtime>::Poller::once(std::chrono::milliseconds timeout) {
+    return p->once(timeout);
+}
+
 
 template class Transport<ZMQ>;
 

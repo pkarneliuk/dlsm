@@ -72,7 +72,7 @@ TEST(Transport, ZMQPubSub) {
             EXPECT_EQ(torecv, tosend);
         };
         SendRecv(1234, 0);
-        SendRecv("1234", "1234"s);
+        SendRecv("1234"s, "1234"s);
         SendRecv(Payload{42}, Payload{0});
         SendRecv("std::string"s, "std__string"s);
         SendRecv(std::vector<Payload>{{3}, {2}, {1}}, std::vector<Payload>{{1}, {2}, {3}});

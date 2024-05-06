@@ -1,3 +1,4 @@
+find_package(nlohmann_json REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(ZeroMQ REQUIRED)
 
@@ -5,7 +6,7 @@ file(GLOB_RECURSE PUBLIC_HDRS   ../include/dlsm/*.hpp ${VERSION_HPP})
 file(GLOB_RECURSE INTERNAL_HDRS ../include/impl/*.hpp)
 
 add_library               (dlsm STATIC  ${INTERNAL_HDRS} ${PUBLIC_HDRS})
-target_precompile_headers (dlsm PRIVATE ${INTERNAL_HDRS} ${PUBLIC_HDRS})
+# target_precompile_headers (dlsm PRIVATE ${INTERNAL_HDRS} ${PUBLIC_HDRS})
 target_include_directories(dlsm PUBLIC
     "$<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/gen/include>"
     "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
@@ -15,6 +16,7 @@ target_sources            (dlsm PRIVATE
     Disruptor.cpp
     DisruptorGraph.cpp
     Logger.cpp
+    Reactor.cpp
     SharedMemory.cpp
     Signal.cpp
     Str.cpp
@@ -26,10 +28,12 @@ target_link_libraries     (dlsm
         Options
         $<TARGET_NAME_IF_EXISTS:Coverage>
         fbs
+        nlohmann_json::nlohmann_json
         spdlog::spdlog
         atomic
-    PRIVATE
         libzmq-static
+#    PRIVATE
+#        libzmq-static
 )
 
 add_library               (dlsmRuntime SHARED Public.cpp ${INTERNAL_HDRS} ${PUBLIC_HDRS})

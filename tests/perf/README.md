@@ -22,12 +22,6 @@ sudo perf stat -e L1-dcache-loads,L1-dcache-load-misses,mem_inst_retired.lock_lo
     --benchmark_counters_tabular=true           \
     --benchmark_display_aggregates_only=true
 
-# Watch memory statistics(may affect performance measurements)
-watch -n 0.2 "grep -E Mem\|Huge\|Swap\|Cache\|locked\|Shmem /proc/meminfo && free -hwv"
-# Drop all caches
-sync && echo 3 | sudo tee /proc/sys/vm/drop_caches
-# Virtual Memory statistics measurements interval, default is 1 second
-sudo sysctl vm.stat_interval=300
 ```
 
 ## [delays.py](delays.py)
@@ -44,11 +38,23 @@ lscpu # CPU summary
 lscpu --all --extended --output-all             # Per-core info
 lstopo-no-graphics --no-io --no-legend --of txt # Display layout of available CPUs in physical packages
 numactl --hardware # Display NUMA nodes
-sudo grubby --update-kernel=ALL --args="isolcpus=6-11" # Isolate CPU #6 - #11 from OS scheduling
+sudo grubby --update-kernel=ALL --args="isolcpus=6-11"  # Isolate CPU #6 - #11 from OS scheduling
 sudo grubby --update-kernel=ALL --remove-args="isolcpus=6-11"
+cat /boot/config-`uname -r` | grep CONFIG_NO_HZ_FULL    # Check kernel build options
+sudo grubby --update-kernel=ALL --args="nohz_full=6-11" # Suppress the timer interrupts by scheduler
 cat /proc/cmdline       # Display kernel startup parameters
 cat /sys/devices/system/cpu/isolated  # display isolated cores
 taskset -c 0,4,6-8 pid  # Setting CPU affinity
+```
+
+## Virtual Memory
+```sh
+# Watch memory statistics(may affect performance measurements)
+watch -n 0.2 "grep -E Mem\|Huge\|Swap\|Cache\|locked\|Shmem /proc/meminfo && free -hwv"
+# Drop all caches
+sync && echo 3 | sudo tee /proc/sys/vm/drop_caches
+# Virtual Memory statistics measurements interval, default is 1 second
+sudo sysctl vm.stat_interval=300
 ```
 
 ## HugePages Support

@@ -1,0 +1,5 @@
+{
+    "log" : "trace:stdout:name=heartbeat",
+    "transport": "io_threads=1",
+    "commands": "endpoint=tcp://127.0.0.1:5555"
+}
