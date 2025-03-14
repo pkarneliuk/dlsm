@@ -349,16 +349,10 @@ TEST(DisruptorGraph, Layout) {
     EXPECT_EQ(layout.size(), empty);
     EXPECT_EQ(layout.items_.type(), "double");
 
-    EXPECT_THAT(
-        [&] {
-            layout.check(Layout::Graph{Type::MPMC, Wait::Yield});
-        },
-        ThrowsMessage<std::runtime_error>("Layout::Graph missmatch: type:SPSC=MPMC wait:Block=Yield"));
-    EXPECT_THAT(
-        [&] {
-            layout.check(Layout::Slots{1, 4});
-        },
-        ThrowsMessage<std::runtime_error>("Layout::Slots missmatch: maxPub:0=1 maxSub:0=4"));
+    EXPECT_THAT([&] { layout.check(Layout::Graph{Type::MPMC, Wait::Yield}); },
+                ThrowsMessage<std::runtime_error>("Layout::Graph missmatch: type:SPSC=MPMC wait:Block=Yield"));
+    EXPECT_THAT([&] { layout.check(Layout::Slots{1, 4}); },
+                ThrowsMessage<std::runtime_error>("Layout::Slots missmatch: maxPub:0=1 maxSub:0=4"));
     EXPECT_THAT([&] { layout.check(Layout::Items::create<float>(0, "float")); },
                 ThrowsMessage<std::runtime_error>("Layout::Items missmatch: size:8=4 align:8=4 type:double=float"));
 }

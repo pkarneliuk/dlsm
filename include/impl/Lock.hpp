@@ -21,10 +21,7 @@ struct TASS {
 
     inline bool try_lock() noexcept { return !lock_.exchange(true); }
 
-    inline void lock() noexcept {
-        while (lock_.exchange(true))
-            ;
-    }
+    inline void lock() noexcept { while (lock_.exchange(true)); }
 
     inline void unlock() noexcept { lock_.store(false); }
 };

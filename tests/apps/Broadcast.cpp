@@ -33,8 +33,7 @@ void consume(auto& sub, const auto& items) {
     auto last = sub.consume(next);
     for (; next <= last; ++next) {
         auto& event = items[next];
-        std::cout << /*sub.name()*/ "sub"
-                  << " " << event << '\n';
+        std::cout << /*sub.name()*/ "sub" << " " << event << '\n';
     }
     sub.release(next - 1);
 }
