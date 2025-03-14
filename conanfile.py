@@ -15,12 +15,16 @@ class DLSM(ConanFile):
     ]
     requires = [
         "flatbuffers/24.3.25@#8fc25e15ac8ef302e2c42497d10c95e9",
+        "gperftools/2.16@#0248a0632d82ca3440ea4c57e46794d8",
         "nlohmann_json/3.11.3@#45828be26eb619a2e04ca517bb7b828d",
         "spdlog/1.13.0@#8e88198fd5b9ee31d329431a6d0ccaa2",
         "zeromq/4.3.5@#dd23b6f3e4e0131e696c3a0cd8092277",
     ]
 
     default_options = {
+        "gperftools/*:enable-dynamic-sized-delete-support": True,
+        "gperftools/*:enable_libunwind": False,
+        "gperftools/*:sized_delete": True,
         "spdlog/*:header_only": False,
         "zeromq/*:poller": None,  # [None, "kqueue", "epoll", "devpoll", "pollset", "poll", "select"]
         "zeromq/*:with_draft_api": True,

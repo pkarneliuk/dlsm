@@ -1,3 +1,4 @@
+find_package(gperftools REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(ZeroMQ REQUIRED)
 
@@ -25,6 +26,7 @@ target_link_libraries     (dlsm
     PUBLIC
         Options
         $<TARGET_NAME_IF_EXISTS:Coverage>
+        gperftools::tcmalloc_minimal
         fbs
         spdlog::spdlog
         atomic
