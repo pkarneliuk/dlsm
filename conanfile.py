@@ -10,14 +10,14 @@ class DLSM(ConanFile):
 
     tool_requires = "cmake/[>=3.29]"
     test_requires = [
-        "gtest/1.14.0@#0bfd0373138714a7567dcdabd133a722",
-        "benchmark/1.8.3@#2b95dcd66432d8ea28c5ac4db0be2fb2",
+        "gtest/1.16.0@#4fd8d9d80636ea9504de6a0ec1ab8686",
+        "benchmark/1.9.1@#73d267daf0371b7f6605edef1594a681",
     ]
     requires = [
-        "flatbuffers/24.3.25@#8fc25e15ac8ef302e2c42497d10c95e9",
+        "flatbuffers/24.12.23@#80629ff8f39788daff0a904c0133ca7b",
         "gperftools/2.16@#0248a0632d82ca3440ea4c57e46794d8",
         "nlohmann_json/3.11.3@#45828be26eb619a2e04ca517bb7b828d",
-        "spdlog/1.13.0@#8e88198fd5b9ee31d329431a6d0ccaa2",
+        "spdlog/1.14.1@#972bbf70be1da4bc57ea589af0efde03",
         "zeromq/4.3.5@#dd23b6f3e4e0131e696c3a0cd8092277",
     ]
 
@@ -26,6 +26,7 @@ class DLSM(ConanFile):
         "gperftools/*:enable_libunwind": False,
         "gperftools/*:sized_delete": True,
         "spdlog/*:header_only": False,
+        "spdlog/*:use_std_fmt": True,
         "zeromq/*:poller": None,  # [None, "kqueue", "epoll", "devpoll", "pollset", "poll", "select"]
         "zeromq/*:with_draft_api": True,
         "zeromq/*:with_websocket": False,

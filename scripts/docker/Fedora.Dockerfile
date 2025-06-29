@@ -1,4 +1,4 @@
-FROM fedora:40
+FROM fedora:42
 
 ARG UNAME=user
 ARG UID=1000
@@ -24,4 +24,4 @@ RUN dnf -y update && dnf -y install \
     && dnf clean all
 
 RUN pip install                     \
-    conan==2.2.3 cmake==3.29.2
+    conan==2.17.1 cmake==3.29.2

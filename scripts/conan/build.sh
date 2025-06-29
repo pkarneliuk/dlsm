@@ -36,6 +36,6 @@ conan $Command $Root                \
     -s build_type=$Type             \
     -s compiler=$ConanCompiler      \
     -s compiler.version=$Version    \
-    -s compiler.cppstd=20           \
+    -s compiler.cppstd=23           \
     -s compiler.libcxx=libstdc++11  \
     $ProfilesHost $ProfilesBuild    \

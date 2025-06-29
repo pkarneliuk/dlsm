@@ -17,6 +17,7 @@
 
 using namespace dlsm::Disruptor::Graph;
 
+namespace {
 constexpr std::string_view str(Type v) {
     // C++23 std::to_underlying()
     const auto i = static_cast<std::underlying_type_t<Type>>(v);
@@ -35,6 +36,30 @@ constexpr std::string_view str(Stat v) {
     constexpr std::array<const char*, 4> strs{"Empty", "Init", "Ready", "Updating"};
     return strs[i];  // NOLINT
 }
+
+template <typename T>
+T castTo(const auto& bytes) {
+    return std::launder(reinterpret_cast<T>(std::data(bytes)));
+}
+
+template <typename U>
+std::span<std::byte> nextTo(const U& that, std::size_t align, std::size_t size, std::size_t n) {
+    void* next = const_cast<U*>(&that);  // NOLINT
+    std::size_t bytes = size * n;
+    std::size_t space = align + bytes;
+
+    void* aligned = std::align(align, bytes, next, space);
+    // C++23 std::start_lifetime_as_array
+    return {std::launder(reinterpret_cast<std::byte*>(aligned)), bytes};
+}
+
+template <typename T, typename U>
+std::span<T> nextTo(const U& that, std::size_t n = 1) {
+    auto bytes = nextTo(that, alignof(T), sizeof(T), n);
+    return {castTo<T*>(bytes), n};
+}
+
+}  // namespace
 
 namespace dlsm::Disruptor::Graph {
 
@@ -85,28 +110,6 @@ struct std::formatter<Layout> : std::formatter<std::string> {
 
 namespace dlsm::Disruptor::Graph {
 
-template <typename T>
-T castTo(const auto& bytes) {
-    return std::launder(reinterpret_cast<T>(std::data(bytes)));
-}
-
-template <typename U>
-std::span<std::byte> nextTo(const U& that, std::size_t align, std::size_t size, std::size_t n) {
-    void* next = const_cast<U*>(&that);  // NOLINT
-    std::size_t bytes = size * n;
-    std::size_t space = align + bytes;
-
-    void* aligned = std::align(align, bytes, next, space);
-    // C++23 std::start_lifetime_as_array
-    return {std::launder(reinterpret_cast<std::byte*>(aligned)), bytes};
-}
-
-template <typename T, typename U>
-std::span<T> nextTo(const U& that, std::size_t n = 1) {
-    auto bytes = nextTo(that, alignof(T), sizeof(T), n);
-    return {castTo<T*>(bytes), n};
-}
-
 struct alignas(CacheLineSize) VLA : Layout {
     std::atomic<Stat> state_{Stat::Empty};  // Kind of SeqLock
 
@@ -149,7 +152,7 @@ struct alignas(CacheLineSize) VLA : Layout {
         dlsm::Memory::checkAlignment(&that);
         const auto s = slots();
         dlsm::Memory::checkAlignment(std::data(s));
-        std::uninitialized_default_construct(std::begin(s), std::end(s));
+        std::ranges::uninitialized_default_construct(std::begin(s), std::end(s));
         // clang-format off
         using namespace dlsm::Disruptor::Waits;
         switch(graph_.wait_) {
@@ -161,11 +164,11 @@ struct alignas(CacheLineSize) VLA : Layout {
         // clang-format on
         const auto seq = sequences();
         dlsm::Memory::checkAlignment(std::data(seq));
-        std::uninitialized_default_construct(std::begin(seq), std::end(seq));
+        std::ranges::uninitialized_default_construct(std::begin(seq), std::end(seq));
         // Fill items by zeroes(no ctor & dtor)
         auto i = items();
         dlsm::Memory::checkAlignment(std::data(i), that.items_.align_);
-        std::fill(std::begin(i), std::end(i), std::byte{0});
+        std::ranges::fill(std::begin(i), std::end(i), std::byte{0});
         state_.store(state);
     }
     ~VLA() {
@@ -467,6 +470,7 @@ struct IGraphImpl final : IGraphInternal, public std::enable_shared_from_this<IG
     const std::span<std::byte> items() const override { return vla_.items(); }
 };
 
+namespace {
 IGraphInternal::Ptr createTypeWait(VLA& layout) {
     using namespace dlsm::Disruptor::Waits;
     using namespace dlsm::Disruptor::Sequencers;
@@ -535,10 +539,12 @@ IGraphInternal::Ptr create(const Layout& required, std::span<std::byte> space) {
     return Graph::create(required, layout);
 }
 
+}  // namespace
+
 IGraph::Ptr IGraph::create(Type type, Wait wait, Layout::Items items) {
     // 1) construction in memory with internal ownership (initialization, with ownership)
     items.capacity_ = ceilingNextPowerOfTwo(items.capacity_);
-    Layout required{{type, wait}, {(type == Type::MPMC ? 4U : 1U), 4}, items};
+    Layout required{{type, wait}, {.maxPub_ = (type == Type::MPMC ? 4U : 1U), .maxSub_ = 4}, items};
     // Allocate storage for required layout and move its ownership to internal
     auto internal = std::vector<std::byte>(required.size());
     auto graph = Graph::create(required, internal);

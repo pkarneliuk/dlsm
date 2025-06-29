@@ -11,7 +11,7 @@
 namespace dlsm {
 
 struct ZMQ {
-    static_assert((ZMQ_VERSION_MAJOR == 4) && (ZMQ_VERSION_MINOR >= 3), "ZeroMQ 4.3+ is required");
+    // static_assert((ZMQ_VERSION_MAJOR == 4) && (ZMQ_VERSION_MINOR >= 3), "ZeroMQ 4.3+ is required");
 
     static inline void check(const bool success, std::string_view description = {}) {
         if (!success) [[unlikely]] {

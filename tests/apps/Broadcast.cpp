@@ -8,6 +8,7 @@
 using namespace std::literals;
 using namespace dlsm::Disruptor::Graph;
 
+namespace {
 struct alignas(64) Event {
     std::chrono::nanoseconds timestamp;
     std::uint64_t seqnumber;
@@ -37,6 +38,7 @@ void consume(auto& sub, const auto& items) {
     }
     sub.release(next - 1);
 }
+}  // namespace
 
 int main(int argc, char* argv[]) {
     if (argc < 3 || (argv[1] != "pub"s && argv[1] != "sub"s && argv[1] != "mon"s)) {
@@ -51,7 +53,7 @@ int main(int argc, char* argv[]) {
     auto name = std::string{argv[1]};
     auto path = std::string{argv[2]};
     auto msgs = argc < 4 ? 1 : std::stoull(argv[3]);
-    auto data = Layout{{Type::MPMC, Wait::Spins}, {4, 4}, Layout::Items::create<Event>(16)};
+    auto data = Layout{{Type::MPMC, Wait::Spins}, {.maxPub_ = 4, .maxSub_ = 4}, Layout::Items::create<Event>(16)};
     auto opts = std::format("lock=on,name={}", path);
 
     if (pub) opts += ",purge=on,create=on";
@@ -72,7 +74,7 @@ int main(int argc, char* argv[]) {
     std::cout << std::format("{} {}", name, graph->description());
 
     for (std::size_t i = 0; i < msgs; ++i) {
-        produce(Event{std::chrono::system_clock::now().time_since_epoch(), i}, *P1, items);
+        produce(Event{.timestamp = std::chrono::system_clock::now().time_since_epoch(), .seqnumber = i}, *P1, items);
         consume(*C1, items);
         consume(*C2, items);
     }

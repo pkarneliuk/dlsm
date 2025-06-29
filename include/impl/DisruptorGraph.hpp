@@ -19,6 +19,7 @@ struct Layout {
     struct Graph {
         Type type_{Type::SPSC};
         Wait wait_{Wait::Block};
+        Graph(Type type = Type::SPSC, Wait wait = Wait::Block) : type_{type}, wait_{wait} {}
     };
 
     struct Slots {
@@ -46,7 +47,7 @@ struct Layout {
         static Items create(std::size_t n = 0, std::string_view name = {}) {
             static_assert(std::is_standard_layout_v<T>);
             auto& info = typeid(T);
-            auto items = Items{n, sizeof(T), alignof(T), info.hash_code()};
+            auto items = Items{.capacity_ = n, .size_ = sizeof(T), .align_ = alignof(T), .hash_ = info.hash_code()};
             items.type(name.empty() ? std::string_view{info.name()} : name);
             return items;
         }
@@ -112,7 +113,7 @@ struct IGraph {
         return Ring<T>{{std::launder(reinterpret_cast<T*>(bytes.data())), bytes.size() / vla.items_.size_}};
     }
 
-    static Ptr create(Type type, Wait wait, Layout::Items items = {1024});
+    static Ptr create(Type type, Wait wait, Layout::Items items = {.capacity_ = 1024});
     static Ptr inproc(const Layout& required, std::span<std::byte> space);
     static Ptr shared(const Layout& required, const std::string& opts, std::string_view attaching = "100x1");
 };

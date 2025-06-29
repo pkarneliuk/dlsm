@@ -24,7 +24,7 @@ protected:
     void sink_it_(const spdlog::details::log_msg& msg) override try {
         spdlog::memory_buf_t record;
         spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, record);
-        sink_.AddRecord(fmt::to_string(record));
+        sink_.AddRecord({record.data(), record.size()});
     } catch (const std::exception& e) {
         sink_.AddRecord("Exception on formatting raw message:" + std::string(msg.payload.data()) +
                         " exception:" + e.what());

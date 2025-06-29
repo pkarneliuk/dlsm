@@ -341,7 +341,7 @@ struct OffsetsBarrier {
     Sequence::Ptr cursor() const noexcept { return last_; }
     Sequence::Value last() const noexcept { return last_.load(); }
     void release(Sequence::Value sequence) noexcept { last_.store(sequence); }
-
+    // NOLINTNEXTLINE
     std::ptrdiff_t offset(const Sequence::Ptr ptr) const { return ptr - &last_.value_; }
     Sequence::Ptr ptr(std::ptrdiff_t offset) const { return &last_.value_ + offset; }
 

@@ -141,7 +141,7 @@ struct InExternMemory {
     InExternMemory(Type type, Wait wait, std::size_t pubs = 3, std::size_t subs = 3) {
         auto capacity = Layout::Items::create<Event>(512);
         if (type == Type::SPMC) pubs = 1;
-        layout = Layout{{type, wait}, {pubs, subs}, capacity};
+        layout = Layout{Layout::Graph{type, wait}, Layout::Slots{.maxPub_ = pubs, .maxSub_ = subs}, capacity};
         space.resize(layout.size());
     }
 
@@ -261,7 +261,8 @@ struct InSharedMemory {
 
     std::string opts() const { return std::format("name=DisruptorGraph.InSharedMemory{},lock=on", ::getpid()); }
 
-    std::jthread pub(std::barrier<>& sync, std::string name, std::size_t init = 1, std::size_t publishers = 1) const {
+    std::jthread pub(std::barrier<>& sync, const std::string& name, std::size_t init = 1,
+                     std::size_t publishers = 1) const {
         return std::jthread([this, name, init, publishers, &sync] {
             dlsm::Thread::name(name);
             std::string create = (init == 1) ? ",purge=on,create=on" : ",open=500x1";
@@ -276,7 +277,7 @@ struct InSharedMemory {
         });
     };
 
-    std::jthread sub(std::barrier<>& sync, std::string name, const std::vector<std::string>& deps = {},
+    std::jthread sub(std::barrier<>& sync, const std::string& name, const std::vector<std::string>& deps = {},
                      std::size_t publishers = 1) const {
         return std::jthread([this, &sync, name, deps, publishers] {
             dlsm::Thread::name(name);
@@ -587,8 +588,8 @@ TEST(DisruptorGraph, InExternMemory) {
     InExternMemory(Type::MPMC, Wait::Share).Topologies();
 
     {
-        auto capacity = Layout::Items{512};
-        auto layout = Layout{{Type::MPMC, Wait::Block}, {1, 1}, capacity};
+        auto capacity = Layout::Items{.capacity_ = 512};
+        auto layout = Layout{{Type::MPMC, Wait::Block}, Layout::Slots{.maxPub_ = 1, .maxSub_ = 1}, capacity};
         std::vector<std::byte> lowspace{42};
 
         EXPECT_THAT([&] { IGraph::inproc(layout, lowspace); },
@@ -600,29 +601,29 @@ TEST(DisruptorGraph, InExternMemory) {
 TEST(DisruptorGraph, InSharedMemory) {
     const auto capacity = Layout::Items::create<Event>(64);
     {
-        auto layout = Layout{{Type::SPMC, Wait::Spins}, {1, 3}, capacity};
+        auto layout = Layout{{Type::SPMC, Wait::Spins}, {.maxPub_ = 1, .maxSub_ = 3}, capacity};
         InSharedMemory{layout}.Topologies();
     }
     {
-        auto layout = Layout{{Type::MPMC, Wait::Spins}, {3, 3}, capacity};
+        auto layout = Layout{{Type::MPMC, Wait::Spins}, {.maxPub_ = 3, .maxSub_ = 3}, capacity};
         InSharedMemory{layout}.Topologies();
     }
     {
-        auto layout = Layout{{Type::SPMC, Wait::Share}, {1, 3}, capacity};
+        auto layout = Layout{{Type::SPMC, Wait::Share}, {.maxPub_ = 1, .maxSub_ = 3}, capacity};
         InSharedMemory{layout}.Topologies();
     }
     {
-        auto layout = Layout{{Type::MPMC, Wait::Share}, {3, 3}, capacity};
+        auto layout = Layout{{Type::MPMC, Wait::Share}, {.maxPub_ = 3, .maxSub_ = 3}, capacity};
         InSharedMemory{layout}.Topologies();
     }
 
     {
-        auto layout = Layout{{Type::SPMC, Wait::Block}, {1, 3}, capacity};
+        auto layout = Layout{{Type::SPMC, Wait::Block}, {.maxPub_ = 1, .maxSub_ = 3}, capacity};
         EXPECT_THAT([&] { IGraph::shared(layout, "opts"); },
                     ThrowsMessage<std::invalid_argument>("Wait::Block is not allowed for Layout in Shared Memory"));
     }
     {
-        auto layout = Layout{{Type::SPMC, Wait::Yield}, {2, 3}, capacity};
+        auto layout = Layout{{Type::SPMC, Wait::Yield}, {.maxPub_ = 2, .maxSub_ = 3}, capacity};
         EXPECT_THAT([&] { IGraph::shared(layout, "name=DisruptorGraph.BadMaxSubs,create=on"); },
                     ThrowsMessage<std::invalid_argument>("Type::SPMC supports only one producer, current limit:2"));
     }

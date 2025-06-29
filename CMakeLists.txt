@@ -1,10 +1,11 @@
 cmake_minimum_required(VERSION 3.29)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 cmake_policy(SET CMP0091 ${CMAKE_POLICY_DEFAULT_CMP0091})
+unset(CMAKE_TOOLCHAIN_FILE) # CMake Warning: Manually-specified variables were not used by the project
 
 project(DLSM VERSION ${CONAN_PACKAGE_VERSION} LANGUAGES CXX)
 

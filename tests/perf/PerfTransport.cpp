@@ -69,7 +69,7 @@ void TransportPubSub(benchmark::State& state, Args&&... args) {
                     sync.arrive_and_wait();
                     begin = timestamps.ts();
 
-                    Event e{0ns, 0};
+                    Event e{.timestamp = 0ns, .seqnumber = 0};
                     while (count < tosend) {
                         ts[e.seqnumber] = e.timestamp = timestamps.ts();
                         e.seqnumber += 1;
@@ -154,7 +154,6 @@ void TransportPubSub(benchmark::State& state, Args&&... args) {
         state.counters["per_item(avg)"] = (seconds / tosend).count();
     }
 }
-}  // namespace
 
 #ifdef NDEBUG
 const auto repeats = 5;
@@ -172,28 +171,20 @@ const auto popts = ",delay_ms=100,send_timeout_ms=10,send_buf_size="s + std::to_
 const auto sopts = ",delay_ms=500,recv_timeout_ms=100,recv_buf_size="s + std::to_string(buf_size) + ",recv_hwm_msgs="s +
                    std::to_string(hwm_msgs);
 
-// Use BENCHMARK_TEMPLATE1_CAPTURE after 1.8.4+ release
+void CustomArguments(benchmark::internal::Benchmark* b) {
+    b->MeasureProcessCPUTime()->UseManualTime()->Unit(benchmark::kSecond)->Iterations(1)->Repetitions(repeats);
+}
+}  // namespace
+
 BENCHMARK_CAPTURE(TransportPubSub, mem, (dlsm::ZMQ*)nullptr, "io_threads=0"s,
                   "endpoint=inproc://mem-pub-sub-perf"s + popts, "endpoint=inproc://mem-pub-sub-perf"s + sopts)
-    ->MeasureProcessCPUTime()
-    ->UseManualTime()
-    ->Unit(benchmark::kSecond)
-    ->Iterations(1)
-    ->Repetitions(repeats)
+    ->Apply(CustomArguments)
     ->Args({4, num_msgs, 0, 1});
 BENCHMARK_CAPTURE(TransportPubSub, ipc, (dlsm::ZMQ*)nullptr, "io_threads=2"s,
                   "endpoint=ipc://@ipc-pub-sub-perf"s + popts, "endpoint=ipc://@ipc-pub-sub-perf"s + sopts)
-    ->MeasureProcessCPUTime()
-    ->UseManualTime()
-    ->Unit(benchmark::kSecond)
-    ->Iterations(1)
-    ->Repetitions(repeats)
+    ->Apply(CustomArguments)
     ->Args({4, num_msgs, 0, 1});
 BENCHMARK_CAPTURE(TransportPubSub, tcp, (dlsm::ZMQ*)nullptr, "io_threads=2"s, "endpoint=tcp://127.0.0.1:5551"s + popts,
                   "endpoint=tcp://127.0.0.1:5551"s + sopts)
-    ->MeasureProcessCPUTime()
-    ->UseManualTime()
-    ->Unit(benchmark::kSecond)
-    ->Iterations(1)
-    ->Repetitions(repeats)
+    ->Apply(CustomArguments)
     ->Args({4, num_msgs, 0, 1});

@@ -16,7 +16,6 @@
 using namespace std::literals;
 
 namespace {
-
 #ifdef NDEBUG
 const auto repeats = 5;
 const auto multiplier = 1;  // for real perf measurement: 1'000;
@@ -254,7 +253,7 @@ void DisruptorThroughput(benchmark::State& state) {
                     result.emplace_back(amounts[i] * (i + 1), (i + 1));
                 }
             }
-            std::sort(std::rbegin(result), std::rend(result));
+            std::ranges::sort(std::rbegin(result), std::rend(result));
             return result;
         }
 
@@ -402,6 +401,10 @@ void DisruptorSpinner(benchmark::State& state) {
         spinner.once();
     }
 }
+
+void CustomArguments(benchmark::internal::Benchmark* b) {
+    b->MeasureProcessCPUTime()->UseManualTime()->Unit(benchmark::kSecond)->Iterations(1)->Repetitions(repeats);
+}
 }  // namespace
 
 using namespace dlsm::Disruptor::Waits;
@@ -416,84 +419,40 @@ using SPMCSpinsSharing = SPMC<SpinsStrategy, OffsetsBarrier<Ndeps>&>;
 using MPMCSpinsSharing = MPMC<SpinsStrategy, OffsetsBarrier<Ndeps>&>;
 
 BENCHMARK(DisruptorLatency<SPMCSpinsAtomics>)
-    ->MeasureProcessCPUTime()
-    ->UseManualTime()
-    ->Unit(benchmark::kSecond)
-    ->Iterations(1)
-    ->Repetitions(repeats)
+    ->Apply(CustomArguments)
     ->Args({1, 4, latency_items, 0})
     ->Args({1, 4, latency_items, 32});
 BENCHMARK(DisruptorLatency<SPMCSpinsSharing>)
-    ->MeasureProcessCPUTime()
-    ->UseManualTime()
-    ->Unit(benchmark::kSecond)
-    ->Iterations(1)
-    ->Repetitions(repeats)
+    ->Apply(CustomArguments)
     ->Args({1, 4, latency_items, 0})
     ->Args({1, 4, latency_items, 32});
 
 BENCHMARK(DisruptorLatency<MPMCSpinsAtomics>)
-    ->MeasureProcessCPUTime()
-    ->UseManualTime()
-    ->Unit(benchmark::kSecond)
-    ->Iterations(1)
-    ->Repetitions(repeats)
+    ->Apply(CustomArguments)
     ->Args({1, 4, latency_items, 0})
     ->Args({1, 4, latency_items, 32});
 BENCHMARK(DisruptorLatency<MPMCSpinsSharing>)
-    ->MeasureProcessCPUTime()
-    ->UseManualTime()
-    ->Unit(benchmark::kSecond)
-    ->Iterations(1)
-    ->Repetitions(repeats)
+    ->Apply(CustomArguments)
     ->Args({1, 4, latency_items, 0})
     ->Args({1, 4, latency_items, 32});
 BENCHMARK(DisruptorLatency<MPMCSpinsAtomics>)
-    ->MeasureProcessCPUTime()
-    ->UseManualTime()
-    ->Unit(benchmark::kSecond)
-    ->Iterations(1)
-    ->Repetitions(repeats)
+    ->Apply(CustomArguments)
     ->Args({4, 1, latency_items, 0})
     ->Args({4, 1, latency_items, 32});
 BENCHMARK(DisruptorLatency<MPMCSpinsSharing>)
-    ->MeasureProcessCPUTime()
-    ->UseManualTime()
-    ->Unit(benchmark::kSecond)
-    ->Iterations(1)
-    ->Repetitions(repeats)
+    ->Apply(CustomArguments)
     ->Args({4, 1, latency_items, 0})
     ->Args({4, 1, latency_items, 32});
 
-BENCHMARK(DisruptorThroughput<SPMCSpinsAtomics>)
-    ->MeasureProcessCPUTime()
-    ->UseManualTime()
-    ->Unit(benchmark::kSecond)
-    ->Iterations(1)
-    ->Repetitions(repeats)
-    ->Args({1, 4, throughput_items, 32});
-BENCHMARK(DisruptorThroughput<SPMCSpinsSharing>)
-    ->MeasureProcessCPUTime()
-    ->UseManualTime()
-    ->Unit(benchmark::kSecond)
-    ->Iterations(1)
-    ->Repetitions(repeats)
-    ->Args({1, 4, throughput_items, 32});
+BENCHMARK(DisruptorThroughput<SPMCSpinsAtomics>)->Apply(CustomArguments)->Args({1, 4, throughput_items, 32});
+BENCHMARK(DisruptorThroughput<SPMCSpinsSharing>)->Apply(CustomArguments)->Args({1, 4, throughput_items, 32});
 
 BENCHMARK(DisruptorThroughput<MPMCSpinsAtomics>)
-    ->MeasureProcessCPUTime()
-    ->UseManualTime()
-    ->Unit(benchmark::kSecond)
-    ->Iterations(1)
-    ->Repetitions(repeats)
+    ->Apply(CustomArguments)
     ->Args({1, 4, throughput_items, 32})
     ->Args({4, 1, throughput_items, 32});
 BENCHMARK(DisruptorThroughput<MPMCSpinsSharing>)
-    ->MeasureProcessCPUTime()
-    ->UseManualTime()
-    ->Unit(benchmark::kSecond)
-    ->Iterations(1)
-    ->Repetitions(repeats)
+    ->Apply(CustomArguments)
     ->Args({1, 4, throughput_items, 32})
     ->Args({4, 1, throughput_items, 32});
 

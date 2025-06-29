@@ -110,7 +110,7 @@ Mask AllAvailableCPU() {
 }
 
 void NanoSleep::pause() noexcept {
-    const timespec timeout = {0, 1};
+    const timespec timeout = {.tv_sec = 0, .tv_nsec = 1};
     ::nanosleep(&timeout, nullptr);
 }
 

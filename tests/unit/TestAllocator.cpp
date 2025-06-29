@@ -20,6 +20,7 @@ $ cat /sys/kernel/mm/transparent_hugepage/enabled
 always [madvise] never
 */
 
+namespace {
 template <template <typename> class Allocator>
 void CheckCommon() {
     EXPECT_NO_THROW({
@@ -40,6 +41,7 @@ void CheckCommon() {
 
     EXPECT_THAT([&] { (void)Allocator<int>().allocate(0); }, Throws<std::bad_array_new_length>());
 }
+}  // namespace
 
 TEST(Allocator, DISABLED_MAdviseAllocator) {
     CheckCommon<dlsm::MAdviseAllocator>();

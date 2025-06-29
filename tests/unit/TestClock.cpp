@@ -3,6 +3,7 @@
 
 using namespace std::literals;
 
+namespace {
 template <dlsm::Clock::Concept Clock>
 void TestClock(std::chrono::nanoseconds resolution) {
     const auto ts1 = Clock::timestamp();
@@ -14,6 +15,7 @@ void TestClock(std::chrono::nanoseconds resolution) {
     EXPECT_NE(res, 0ns);
     EXPECT_LE(res, resolution) << typeid(Clock).name() << " min tick resolution";
 }
+}  // namespace
 
 TEST(Clock, Clock) {
     TestClock<dlsm::Clock::System>(1ns);
