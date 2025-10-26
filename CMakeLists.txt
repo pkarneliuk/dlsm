@@ -10,6 +10,7 @@ unset(CMAKE_TOOLCHAIN_FILE) # CMake Warning: Manually-specified variables were n
 project(DLSM VERSION ${CONAN_PACKAGE_VERSION} LANGUAGES CXX)
 
 include(GNUInstallDirs)
+include(cmake/Ccache.cmake)
 include(cmake/Coverage.cmake)
 include(cmake/Doxygen.cmake)
 include(cmake/Linters.cmake)
