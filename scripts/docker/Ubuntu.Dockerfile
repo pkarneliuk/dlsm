@@ -30,5 +30,5 @@ RUN    ln -s $(which g++-14) /usr/local/bin/g++         \
 
 USER $UID:$GID
 RUN pip install --break-system-packages --user  \
-  conan==2.17.1 cmake==3.29.2
-ENV PATH "$PATH:/home/$UNAME/.local/bin"
+    conan==2.17.1 cmake==3.29.2
+ENV PATH="$PATH:/home/$UNAME/.local/bin"

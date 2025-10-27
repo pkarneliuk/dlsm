@@ -1,3 +1,5 @@
+find_package(Boost REQUIRED COMPONENTS headers)
+find_package(OpenSSL REQUIRED)
 find_package(gperftools REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(ZeroMQ REQUIRED)
@@ -32,6 +34,9 @@ target_link_libraries     (dlsm
         atomic
     PRIVATE
         libzmq-static
+        Boost::headers
+        OpenSSL::SSL
+        OpenSSL::Crypto
 )
 
 add_library               (dlsmRuntime SHARED Public.cpp ${INTERNAL_HDRS} ${PUBLIC_HDRS})

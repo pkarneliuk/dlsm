@@ -21,6 +21,7 @@ RUN dnf -y update && dnf -y install \
     clang clang-tools-extra         \
     lcov llvm                       \
     python3-pip                     \
+    perl                            \
     && dnf clean all
 
 RUN pip install                     \
