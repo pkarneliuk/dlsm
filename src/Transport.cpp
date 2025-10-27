@@ -2,6 +2,7 @@
 
 #include <zmq.h>
 
+#include <format>
 #include <map>
 #include <memory>
 #include <thread>
@@ -39,11 +40,11 @@ struct ZMQ {
         };
 
         // Parse options and try to set their values to context
-        for (const auto& opt : dlsm::Str::ParseOpts(options)) try {
-                check(0 == zmq_ctx_set(context_.get(), opts.at(opt.first), std::stoi(opt.second)));
+        for (const auto& [key, value] : dlsm::Str::ParseOpts(options)) try {
+                check(0 == zmq_ctx_set(context_.get(), opts.at(key), std::stoi(value)));
             } catch (const std::exception& e) {
-                throw std::invalid_argument("Unexpected ZMQ Context option:" + opt.first + "=" + opt.second +
-                                            " with:" + e.what());
+                throw std::invalid_argument(
+                    std::format("Unexpected ZMQ Context option:{}={} with:{}", key, value, e.what()));
             }
     }
 
@@ -142,8 +143,7 @@ struct ZMQ {
         inline void publish([[maybe_unused]] void* payload) {
             const int ret = zmq_msg_send(&msg_, socket_.get(), 0);
             if (-1 == ret) [[unlikely]] {
-                const auto code = zmq_errno();
-                check(false, "Send " + std::to_string(code) + " ret: " + std::to_string(ret));
+                check(false, "zmq_msg_send ret: " + std::to_string(ret));
             }
         }
         inline void release([[maybe_unused]] void* payload) { zmq_msg_close(&msg_); }
@@ -157,8 +157,7 @@ struct ZMQ {
             zmq_msg_init(&msg_);
             if (int ret = zmq_msg_recv(&msg_, socket_.get(), 0); ret == -1) {
                 zmq_msg_close(&msg_);
-                const auto code = zmq_errno();
-                check(false, "Recv " + std::to_string(code) + " ret: " + std::to_string(ret));
+                check(zmq_errno() == EAGAIN, "zmq_msg_recv ret: " + std::to_string(ret));
                 return nullptr;
             }
             return zmq_msg_data(&msg_);
